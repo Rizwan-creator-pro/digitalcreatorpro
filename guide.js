@@ -14,13 +14,8 @@ const guideSidebar = document.getElementById('guideSidebar');
 
 /* ---------- build the sidebar ------------------------------------- */
 const productsList = window.PRODUCTS || [];
-const drawerHeadHtml = `
-  <div class="gnav-drawer-head">
-    <div class="gnav-drawer-title"><i class="fa-solid fa-book-open"></i> Guide Sections</div>
-    <button class="gnav-drawer-close" id="gnavCloseBtn" type="button" aria-label="Close sections"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-`;
-guideSidebar.innerHTML = drawerHeadHtml + productsList.map(product => `
+const listContainer = document.getElementById('guideSidebarList') || guideSidebar;
+listContainer.innerHTML = productsList.map(product => `
   <div class="gnav-product" data-product="${product.id}">
     <div class="gnav-heading" data-product-toggle="${product.id}">
       <span style="display:flex;align-items:center;gap:0.55rem"><span class="gnav-dot"></span>${product.name}</span>
@@ -64,6 +59,11 @@ function loadSection(productId, sectionId) {
 
 /* ---------- clicks: expand/collapse product, load a section --------- */
 guideSidebar.addEventListener('click', (e) => {
+  const close = e.target.closest('#gnavCloseBtn') || e.target.closest('.gnav-drawer-close');
+  if (close) {
+    closeDrawer();
+    return;
+  }
   const toggle = e.target.closest('[data-product-toggle]');
   if (toggle) {
     const id = toggle.dataset.productToggle;
@@ -124,7 +124,8 @@ function closeDrawer(){
   document.body.classList.remove('gnav-open');
 }
 if (toggleBtn) {
-  toggleBtn.addEventListener('click', () => {
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     shell.classList.contains('open') ? closeDrawer() : openDrawer();
   });
 }

@@ -41,60 +41,95 @@
 .gnav-item.active{color:var(--ink);border-left-color:var(--accent-deep);font-weight:600;background:var(--cream2)}
 
 .gnav-toggle{display:none}
-.gnav-drawer-head{display:none}
-.gnav-overlay{position:fixed;inset:0;background:rgba(18,18,18,0.42);z-index:340;opacity:0;pointer-events:none;transition:opacity 0.3s ease}
+.gnav-drawer-head{display:none !important}
+.gnav-overlay{position:fixed;inset:0;background:rgba(18,18,18,0.48);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:450;opacity:0;pointer-events:none;transition:opacity 0.25s ease}
 
 @media(min-width:1001px){
   .guide-shell.collapsed{gap:0}
   .guide-shell.collapsed .guide-sidebar{width:0;opacity:0;pointer-events:none;padding:0;margin:0}
+  .gnav-drawer-head{display:none !important}
 }
 @media(max-width:1000px){
   body.gnav-open{overflow:hidden}
-  .guide-shell{display:block;padding:0 1.25rem 4rem}
+  .guide-shell{display:block;padding:0 1.25rem 4rem;position:static !important;z-index:auto !important}
+  .guide-shell.open{position:static !important;z-index:auto !important}
   .gnav-toggle{
     display:inline-flex;
     align-items:center;
-    gap:0.35rem;
-    font-family:var(--display);
-    font-weight:600;
-    font-size:0.76rem;
+    justify-content:center;
+    width:36px;
+    height:36px;
+    border-radius:50%;
     background:var(--dark);
     color:#fff;
-    padding:0.35rem 0.65rem;
-    border-radius:var(--r-pill);
     border:none;
     cursor:pointer;
     flex-shrink:0;
-    line-height:1;
+    font-size:0.92rem;
+    transition:background 0.2s ease,transform 0.15s ease;
+  }
+  .gnav-toggle:hover{background:#2a2a2a}
+  .gnav-toggle:active{transform:scale(0.95)}
+  html[data-theme="dark"] .gnav-toggle{
+    background:rgba(255,255,255,0.12);
+    color:#fff;
+  }
+  html[data-theme="dark"] .gnav-toggle:hover{
+    background:rgba(255,255,255,0.22);
   }
   .guide-sidebar{
-    position:fixed;
-    top:0;
-    right:0;
-    left:auto;
-    bottom:0;
+    position:fixed !important;
+    top:0 !important;
+    right:0 !important;
+    left:auto !important;
+    bottom:0 !important;
     width:300px;
     max-width:86vw;
     height:100vh;
     height:100dvh;
     max-height:100dvh;
-    z-index:350;
+    z-index:500 !important;
+    pointer-events:auto !important;
     background:var(--paper);
-    padding:1.2rem 1.1rem 2rem;
-    box-shadow:-20px 0 50px rgba(0,0,0,0.28);
+    padding:1.1rem 1.1rem 2.5rem;
+    box-shadow:-20px 0 50px rgba(0,0,0,0.35);
     transform:translateX(100%);
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
+    touch-action:pan-y;
     order:0;
     display:flex;
     flex-direction:column;
     transition:transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .guide-shell.open .guide-sidebar{transform:translateX(0)}
-  .gnav-overlay.open{opacity:1;pointer-events:auto}
-  .gnav-product{width:100%}
+  .guide-shell.open .guide-sidebar{transform:translateX(0) !important}
+  .gnav-overlay{
+    position:fixed !important;
+    inset:0 !important;
+    background:rgba(18,18,18,0.48);
+    backdrop-filter:blur(3px);
+    -webkit-backdrop-filter:blur(3px);
+    z-index:450 !important;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s ease;
+  }
+  .gnav-overlay.open{opacity:1 !important;pointer-events:auto !important}
+  .gnav-product{width:100%;pointer-events:auto}
+  .gnav-heading{
+    pointer-events:auto;
+    cursor:pointer;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:rgba(0,0,0,0.05);
+  }
+  .gnav-item{
+    pointer-events:auto;
+    cursor:pointer;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:rgba(0,0,0,0.05);
+  }
   .gnav-drawer-head{
-    display:flex;
+    display:flex !important;
     align-items:center;
     justify-content:space-between;
     padding:0.1rem 0.2rem 0.85rem;
@@ -113,9 +148,9 @@
   }
   .gnav-drawer-title i{color:var(--accent-deep)}
   .gnav-drawer-close{
-    width:30px;
-    height:30px;
-    border-radius:6px;
+    width:32px;
+    height:32px;
+    border-radius:8px;
     border:1px solid var(--line);
     background:var(--cream2);
     color:var(--ink-soft);
@@ -123,8 +158,9 @@
     align-items:center;
     justify-content:center;
     cursor:pointer;
-    font-size:0.85rem;
+    font-size:0.9rem;
     transition:background 0.15s ease,color 0.15s ease;
+    touch-action:manipulation;
   }
   .gnav-drawer-close:hover{background:var(--line);color:var(--ink)}
 }
@@ -135,9 +171,9 @@
   .tb-mark{gap:0.45rem}
   .tb-mark span.full{display:none}
   .tb-mark-text{font-size:0.82rem}
-  .theme-toggle{width:32px;height:32px;font-size:0.85rem}
-  .tb-hamburger{width:32px;height:32px;font-size:0.92rem}
-  .gnav-toggle{padding:0.32rem 0.55rem;font-size:0.72rem}
+  .theme-toggle{width:34px;height:34px;font-size:0.86rem}
+  .tb-hamburger{width:34px;height:34px;font-size:0.95rem}
+  .gnav-toggle{width:34px;height:34px;font-size:0.86rem}
 }
 
 /* Loading state — #guideMain and #guideSidebar start empty until
@@ -167,7 +203,7 @@
       <a href="bundle.html" id="tbBuyLink" class="tb-cv"><i class="fa-solid fa-cart-shopping"></i> Buy Now</a>
     </div>
     <button class="theme-toggle" type="button" aria-label="Toggle dark mode"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i></button>
-    <button class="gnav-toggle" id="gnavToggle" type="button"><i class="fa-solid fa-bars"></i> <span>Sections</span></button>
+    <button class="gnav-toggle" id="gnavToggle" type="button" aria-label="Guide Sections" title="Guide Sections"><i class="fa-solid fa-book-open"></i></button>
     <button class="tb-hamburger" type="button" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
     </div>
   </div>
@@ -188,7 +224,13 @@
     <div class="guide-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>Loading guide…</span></div>
   </main>
 
-  <nav class="guide-sidebar" id="guideSidebar" aria-label="Guide navigation"></nav>
+  <nav class="guide-sidebar" id="guideSidebar" aria-label="Guide navigation">
+    <div class="gnav-drawer-head">
+      <div class="gnav-drawer-title"><i class="fa-solid fa-book-open"></i> Guide Sections</div>
+      <button class="gnav-drawer-close" id="gnavCloseBtn" type="button" aria-label="Close sections"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="guideSidebarList"></div>
+  </nav>
 </div>
 
 <footer>
