@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide — All Products | Digital Creator</title>
+<meta name="description" content="Full documentation for every Oracle APEX tool — every parameter and function, in one searchable guide.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=boxing@400&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ============ PAGE-SPECIFIC: guide (right-side tabs) ============ */
+.eyebrow{display:inline-flex;align-items:center;gap:0.65rem;font-family:var(--mono);font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:1.1rem}
+.eyebrow::before{content:'';width:22px;height:1px;background:var(--accent-deep)}
+.docs-hero{padding:7.5rem 2.5rem 2.5rem;text-align:center;position:relative;overflow:visible;z-index:1}
+
+.guide-shell{display:flex;align-items:flex-start;max-width:1360px;margin:0 auto;padding:1rem 2.5rem 5rem;gap:2.6rem;position:relative;z-index:1}
+.guide-main{flex:1;min-width:0;transition:margin-right 0.25s ease}
+.guide-main .guide-block{max-width:none;margin:0;padding:0;background:none;scroll-margin-top:100px}
+
+/* RIGHT-side sidebar */
+.guide-sidebar{position:sticky;top:88px;width:250px;flex-shrink:0;max-height:calc(100vh - 110px);overflow-y:auto;overflow-x:hidden;padding-bottom:2rem;order:2;transition:width 0.25s ease,opacity 0.2s ease}
+.guide-sidebar::-webkit-scrollbar{width:5px}
+.guide-sidebar::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+.gnav-product{margin-bottom:1rem;width:250px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:0.45rem;box-shadow:0 4px 14px -4px rgba(18,18,18,0.06)}
+.gnav-heading{display:flex;align-items:center;justify-content:space-between;gap:0.6rem;font-family:var(--display);font-weight:700;font-size:0.86rem;color:var(--ink);padding:0.55rem 0.65rem;border-radius:8px;cursor:pointer;transition:background 0.2s}
+.gnav-heading:hover{background:var(--cream2)}
+.gnav-heading.active{background:var(--cream2)}
+.gnav-heading .gnav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);flex-shrink:0;transition:background 0.2s}
+.gnav-heading.active .gnav-dot{background:var(--accent-deep)}
+.gnav-buy{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-faint);text-decoration:none;white-space:nowrap}
+.gnav-buy:hover{color:var(--ink)}
+.gnav-sublist{display:flex;flex-direction:column;padding:0.2rem 0 0.3rem;gap:0.05rem}
+.gnav-sublist.collapsed{display:none}
+.gnav-item{display:block;text-align:left;background:none;border:none;font-family:var(--mono);font-size:0.74rem;color:var(--ink-faint);text-decoration:none;padding:0.45rem 0.65rem;margin-left:0.2rem;margin-bottom:0.12rem;border-left:2px solid transparent;border-radius:6px;cursor:pointer;width:calc(100% - 0.2rem);transition:color 0.2s,border-color 0.2s,background 0.2s}
+.gnav-item:hover{color:var(--ink-soft);background:var(--cream2)}
+.gnav-item.active{color:var(--ink);border-left-color:var(--accent-deep);font-weight:600;background:var(--cream2)}
+
+.gnav-toggle{display:flex;align-items:center;gap:0.5rem;font-family:var(--display);font-weight:600;font-size:0.85rem;background:var(--dark);color:#fff;padding:0.6rem 1rem;border-radius:var(--r-pill);border:none;cursor:pointer}
+.gnav-overlay{position:fixed;inset:0;background:rgba(18,18,18,0.42);z-index:290;opacity:0;pointer-events:none;transition:opacity 0.3s ease}
+
+@media(min-width:1001px){
+  .guide-shell.collapsed{gap:0}
+  .guide-shell.collapsed .guide-sidebar{width:0;opacity:0;pointer-events:none;padding:0;margin:0}
+}
+@media(max-width:1000px){
+  .guide-shell{display:block;padding:0 1.25rem 4rem}
+  .guide-sidebar{position:fixed;top:0;right:0;left:auto;bottom:0;width:280px;max-height:100vh;z-index:300;background:var(--paper);padding:5.5rem 1.3rem 2rem;box-shadow:-24px 0 60px rgba(18,18,18,0.18);transform:translateX(100%);overflow-y:auto;order:0}
+  .guide-shell.open .guide-sidebar{transform:translateX(0)}
+  .gnav-overlay.open{opacity:1;pointer-events:auto}
+}
+@media(max-width:640px){.docs-hero{padding:6.5rem 1.25rem 1rem}}
+
+/* Loading state — #guideMain and #guideSidebar start empty until
+   loadProducts() (a Firestore fetch) resolves and guide.js runs, which
+   can take a moment on a slower connection. Without this, that gap
+   between topbar and footer was just blank white space, which reads as
+   a broken/empty page rather than a page that's still loading. Both
+   guide.js's sidebar build (`guideSidebar.innerHTML = ...`) and
+   loadSection()'s `guideMain.innerHTML = renderGuideGroup(...)` fully
+   REPLACE this markup once real content arrives, so it disappears on
+   its own — no JS change needed to remove it. */
+.guide-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.9rem;padding:6rem 1rem;color:var(--ink-faint);font-family:var(--mono);font-size:0.85rem;letter-spacing:0.04em}
+.guide-loading i{font-size:1.5rem;color:var(--accent-deep)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex;align-items:center;gap:0.5rem">
+      <a href="index.html" class="tb-mark"><span class="dot"></span><span class="tb-mark-text">digitalcreator.tech</span> <span class="full">— Guide</span></a>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem">
+    <div class="tb-links">
+      <a href="index.html" class="tb-li" aria-label="Home"><i class="fa-solid fa-house"></i><span class="tb-li-text">Home</span></a>
+      <a href="https://linkedin.com/in/rizwan0626" target="_blank" class="tb-li js-default-social" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg><span class="tb-li-text">LinkedIn</span></a>
+      <a href="bundle.html" id="tbBuyLink" class="tb-cv"><i class="fa-solid fa-cart-shopping"></i> Buy Now</a>
+    </div>
+    <button class="theme-toggle" type="button" aria-label="Toggle dark mode"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i></button>
+    <button class="gnav-toggle" id="gnavToggle" type="button"><i class="fa-solid fa-bars"></i> Sections</button>
+    <button class="tb-hamburger" type="button" aria-label="Open menu"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="fluent-ambient-backdrop"></div>
+
+<div id="top" class="docs-hero">
+  <div class="eyebrow reveal" style="justify-content:center">Documentation</div>
+  <h1 class="section-title reveal" style="font-size:clamp(2rem,4.4vw,3rem)">Every Product,<br>One Guide</h1>
+  <p class="section-sub reveal" style="margin-left:auto;margin-right:auto">Pick a product on the right, then a section — the guide loads below and the heading color switches to match.</p>
+</div>
+
+<div class="gnav-overlay" id="gnavOverlay"></div>
+
+<div class="guide-shell" id="guideShell">
+  <main class="guide-main" id="guideMain">
+    <div class="guide-loading"><i class="fa-solid fa-spinner fa-spin"></i><span>Loading guide…</span></div>
+  </main>
+
+  <nav class="guide-sidebar" id="guideSidebar" aria-label="Guide navigation"></nav>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-name"><span class="footer-owner-name">M. Rizwan</span></div>
+        <div class="footer-tag">Oracle APEX developer — full documentation for every tool, updated as they grow.</div>
+      </div>
+      <div class="footer-actions">
+        <a href="https://linkedin.com/in/rizwan0626" target="_blank" class="footer-pill js-default-social"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg> LinkedIn</a>
+        <a href="index.html" class="footer-pill"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="bundle.html" id="footerBuyLink" class="footer-pill" style="background:var(--green);color:#08150E;border-color:var(--green)"><i class="fa-solid fa-cart-shopping"></i> Buy Now</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; <span id="yr"></span> <span class="footer-owner-name">M. Rizwan</span> — Oracle APEX Development</span>
+      <span><a href="mailto:rizwan@digitalcreator.tech">rizwan@digitalcreator.tech</a> &nbsp;·&nbsp; <a href="tel:+923290734849">+92 329 073 4849</a></span>
+    </div>
+  </div>
+</footer>
+
+<div class="float-contact" id="floatContact">
+  <a href="https://wa.me/923290734849" target="_blank" class="float-btn wa" aria-label="WhatsApp">
+    <span class="float-tooltip">WhatsApp</span>
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+  <a href="mailto:rizwan@digitalcreator.tech" class="float-btn em" aria-label="Email">
+    <span class="float-tooltip">Email Me</span>
+    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+  </a>
+  <a href="tel:+923290734849" class="float-btn ph" aria-label="Call">
+    <span class="float-tooltip">+92 329 073 4849</span>
+    <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+  </a>
+</div>
+
+<script src="theme.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="data-service.js"></script>
+<script src="firestore-loader.js"></script>
+<script src="site-settings.js"></script>
+<script>loadProducts().then(() => loadScriptsSequential(['app.js', 'guide.js'])); loadSiteSettings();</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed Initial Products | Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<button class="hamburger-btn" id="hamburgerBtn" type="button"><i class="fa-solid fa-bars"></i></button>
+<div class="admin-overlay" id="adminOverlay"></div>
+
+<div class="admin-shell">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <div class="admin-brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+      <div class="admin-brand-text">APEX Store<span>Admin Center</span></div>
+    </div>
+
+    <div class="admin-nav-top">
+      <div class="admin-nav-section-label">Navigation</div>
+      <a class="admin-nav-link" href="dashboard.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a class="admin-nav-link" href="product-form.html"><i class="fa-solid fa-boxes-stacked"></i> <span>Products</span></a>
+      <a class="admin-nav-link" href="guide-form.html"><i class="fa-solid fa-book-open"></i> <span>Guides</span></a>
+      <a class="admin-nav-link" id="settingsNavLink" href="settings.html"><i class="fa-solid fa-sliders"></i> <span>Site Settings</span></a>
+      <a class="admin-nav-link" href="analytics.html"><i class="fa-solid fa-chart-line"></i> <span>Analytics</span></a>
+    </div>
+
+    <div class="admin-nav-bottom">
+      <div class="admin-nav-section-label">System</div>
+      <a class="admin-nav-link" id="auditNavLink" href="audit.html"><i class="fa-solid fa-shield-halved"></i> <span>Audit Log</span></a>
+      <a class="admin-nav-link active" id="seedNavLink" href="seed.html"><i class="fa-solid fa-cloud-arrow-up"></i> <span>Seed Data</span></a>
+      <a class="admin-nav-link" href="../index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>View Store</span></a>
+      <button class="admin-nav-link theme-toggle" type="button" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i> <span>Appearance</span></button>
+      <button class="admin-nav-link" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket"></i> <span>Log Out</span></button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="fluent-ambient-backdrop"></div>
+    <div class="admin-head"><div class="admin-title">One-Time Seed</div></div>
+    <div class="admin-form-card">
+      <h3>Import Products From data.js</h3>
+      <p class="f-hint" style="margin-bottom:1.2rem">Reads <code>PRODUCTS</code> from <code>data.js</code> and writes each one into Firestore as a real product doc — same shape the site now reads live. Safe to run more than once; it overwrites by id rather than duplicating.</p>
+      <div class="form-msg" id="msg"></div>
+      <button class="btn-primary" id="seedBtn" onclick="runSeed()"><i class="fa-solid fa-cloud-arrow-up"></i> Seed Now</button>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="../firebase-config.js"></script>
+<script src="../auth-guard.js"></script>
+<script src="../data-service.js"></script>
+<script src="../data.js"></script>
+<script src="admin-shell.js"></script>
+<script src="../theme.js"></script>
+<script>
+requireAdmin(function(){});
+
+function runSeed(){
+  const btn = document.getElementById('seedBtn');
+  const msg = document.getElementById('msg');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Seeding…';
+
+  const writes = PRODUCTS.map(function(p){
+    const data = Object.assign({}, p);
+    delete data.id;
+    if (data.active === undefined) data.active = true;
+    return saveProduct(p.id, data);
+  });
+
+  Promise.all(writes).then(function(){
+    msg.textContent = 'Seeded ' + PRODUCTS.length + ' product(s): ' + PRODUCTS.map(function(p){ return p.id; }).join(', ') + '.';
+    msg.className = 'form-msg show ok';
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Done';
+  }).catch(function(err){
+    msg.textContent = err.message || 'Seed failed.';
+    msg.className = 'form-msg show error';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Seed Now';
+  });
+}
+</script>
+</body>
+</html>

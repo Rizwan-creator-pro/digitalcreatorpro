@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add / Edit Product | Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<button class="hamburger-btn" id="hamburgerBtn" type="button"><i class="fa-solid fa-bars"></i></button>
+<div class="admin-overlay" id="adminOverlay"></div>
+
+<div class="admin-shell">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <div class="admin-brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+      <div class="admin-brand-text">APEX Store<span>Admin Center</span></div>
+    </div>
+
+    <div class="admin-nav-top">
+      <div class="admin-nav-section-label">Navigation</div>
+      <a class="admin-nav-link" href="dashboard.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a class="admin-nav-link active" href="product-form.html"><i class="fa-solid fa-boxes-stacked"></i> <span>Products</span></a>
+      <a class="admin-nav-link" href="guide-form.html"><i class="fa-solid fa-book-open"></i> <span>Guides</span></a>
+      <a class="admin-nav-link" id="settingsNavLink" href="settings.html"><i class="fa-solid fa-sliders"></i> <span>Site Settings</span></a>
+      <a class="admin-nav-link" href="analytics.html"><i class="fa-solid fa-chart-line"></i> <span>Analytics</span></a>
+    </div>
+
+    <div class="admin-nav-bottom">
+      <div class="admin-nav-section-label">System</div>
+      <a class="admin-nav-link" id="auditNavLink" href="audit.html"><i class="fa-solid fa-shield-halved"></i> <span>Audit Log</span></a>
+      <a class="admin-nav-link" id="seedNavLink" href="seed.html"><i class="fa-solid fa-cloud-arrow-up"></i> <span>Seed Data</span></a>
+      <a class="admin-nav-link" href="../index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>View Store</span></a>
+      <button class="admin-nav-link theme-toggle" type="button" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i> <span>Appearance</span></button>
+      <button class="admin-nav-link" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket"></i> <span>Log Out</span></button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="fluent-ambient-backdrop"></div>
+    <div class="admin-head">
+      <div class="admin-title" id="formTitle">New Product</div>
+    </div>
+    <div class="form-msg" id="formMsg"></div>
+
+    <form id="productForm">
+      <div class="admin-form-card">
+        <h3>Basics</h3>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Product ID (slug) <span class="help-icon">?<span class="help-text">Used everywhere as bundle.html?product=&lt;this&gt;. Lowercase, hyphens only, e.g. pdf-export-engine. Can't be changed after first save.</span></span></label>
+            <input class="f-input" id="pid" placeholder="e.g. pdf-export-engine" required pattern="[a-z0-9\-]+">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Name</label>
+            <input class="f-input" id="pname" required>
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Short Mark <span class="help-icon">?<span class="help-text">The little code-style tag shown in the top-left nav, e.g. pdf22() or rptFmt()</span></span></label>
+            <input class="f-input" id="pshortMark" placeholder="e.g. pdf22()">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Eyebrow</label>
+            <input class="f-input" id="peyebrow" placeholder="e.g. Oracle APEX Utility">
+          </div>
+        </div>
+        <div class="f-row-3">
+          <div class="f-group">
+            <label class="f-label">Accent Color</label>
+            <input class="f-input" type="color" id="paccent" value="#1DBF73">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Accent Deep (headings)</label>
+            <input class="f-input" type="color" id="paccentDeep" value="#12653F">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Accent Dim <span class="help-icon">?<span class="help-text">CSS color used for subtle backgrounds/badges — usually the accent color at low opacity, e.g. rgba(29,191,115,0.13)</span></span></label>
+            <input class="f-input" id="paccentDim" placeholder="rgba(29,191,115,0.13)">
+          </div>
+        </div>
+
+        <div class="f-hint" style="margin:1.4rem 0 0.6rem;font-weight:700;color:var(--ink)">Hero Media <span style="font-weight:400;color:var(--ink-soft)">— the box top-right, next to the title</span></div>
+        <div class="f-group">
+          <label class="f-label">Hero Media Type <span class="help-icon">?<span class="help-text">A static image/GIF, an auto-playing video, or a rotating slideshow — shown in the box next to the hero title.</span></span></label>
+          <select class="f-input" id="pheroMediaType" onchange="toggleHeroMediaType()">
+            <option value="image">Image / GIF (single)</option>
+            <option value="video">Video (autoplay, muted, loop)</option>
+            <option value="slideshow">Image Slideshow</option>
+          </select>
+        </div>
+
+        <div class="f-group" id="heroMediaImageFields">
+          <label class="f-label">Box Image <span class="help-icon">?<span class="help-text">Upload goes to ImgBB and gives you a permanent hosted URL. A .gif URL works here too and will animate.</span></span></label>
+          <div class="img-upload-row">
+            <img class="img-upload-preview" id="imgPreview" src="" alt="" onerror="this.style.opacity=0.3">
+            <label class="img-upload-btn"><i class="fa-solid fa-upload"></i> Upload to ImgBB<input type="file" id="imgFile" accept="image/*"></label>
+            <input class="f-input" id="pboxImage" placeholder="image/your-file.png or https://…" style="flex:1;min-width:220px">
+          </div>
+        </div>
+
+        <div class="f-group" id="heroMediaVideoFields" style="display:none">
+          <label class="f-label">Hero Video URL <span class="help-icon">?<span class="help-text">A YouTube or Vimeo link works directly — it embeds automatically. A direct .mp4/.webm file URL also works and plays muted, looped.</span></span></label>
+          <input class="f-input" id="pheroVideoUrl" placeholder="https://…/hero.mp4">
+        </div>
+
+        <div class="f-group" id="heroMediaSlideshowFields" style="display:none">
+          <label class="f-label">Hero Slideshow Images <button type="button" class="repeat-add" onclick="addHeroSlide()" style="margin-left:0.6rem"><i class="fa-solid fa-plus"></i> Add Image</button></label>
+          <div class="f-hint" style="margin-bottom:0.6rem">Rotates automatically every few seconds, in the order listed here.</div>
+          <div id="heroSlideList"></div>
+        </div>
+
+        <div class="f-hint" style="margin:1.6rem 0 0.6rem;font-weight:700;color:var(--ink);border-top:1px solid var(--line);padding-top:1.2rem">Demo Media <span style="font-weight:400;color:var(--ink-soft)">— the "Watch It Run" laptop mockup further down the page (and its fullscreen click-to-zoom). Fully independent from Hero Media above — leave unconfigured to hide this section entirely for this product.</span></div>
+        <div class="f-group">
+          <label class="f-label">Demo Media Type</label>
+          <select class="f-input" id="pdemoMediaType" onchange="toggleDemoMediaType()">
+            <option value="image">Image / GIF (single)</option>
+            <option value="video">Video (autoplay, muted, loop)</option>
+            <option value="slideshow">Image Slideshow</option>
+          </select>
+        </div>
+
+        <div class="f-group" id="demoMediaImageFields">
+          <label class="f-label">Demo Image <span class="help-icon">?<span class="help-text">Leave blank to hide the "Watch It Run" section for this product.</span></span></label>
+          <div class="img-upload-row">
+            <img class="img-upload-preview" id="demoImgPreview" src="" alt="" onerror="this.style.opacity=0.3">
+            <label class="img-upload-btn"><i class="fa-solid fa-upload"></i> Upload to ImgBB<input type="file" id="demoImgFile" accept="image/*"></label>
+            <input class="f-input" id="pdemoImage" placeholder="image/your-demo.gif or https://…" style="flex:1;min-width:220px">
+          </div>
+        </div>
+
+        <div class="f-group" id="demoMediaVideoFields" style="display:none">
+          <label class="f-label">Demo Video URL <span class="help-icon">?<span class="help-text">A YouTube or Vimeo link works directly — it embeds automatically. A direct .mp4/.webm file URL also works and plays muted, looped.</span></span></label>
+          <input class="f-input" id="pvideoUrl" placeholder="https://…/demo.mp4">
+        </div>
+
+
+        <div class="f-group" id="demoMediaSlideshowFields" style="display:none">
+          <label class="f-label">Demo Slideshow Images <button type="button" class="repeat-add" onclick="addSlide()" style="margin-left:0.6rem"><i class="fa-solid fa-plus"></i> Add Image</button></label>
+          <div class="f-hint" style="margin-bottom:0.6rem">Rotates automatically every few seconds, in the order listed here.</div>
+          <div id="slideList"></div>
+        </div>
+
+        <div class="f-group">
+          <label class="f-label">Hero Title <span class="help-icon">?<span class="help-text">HTML allowed — use &lt;br&gt; for a line break and &lt;span class="accent-text"&gt;…&lt;/span&gt; to color part of it, and end with &lt;em&gt;.&lt;/em&gt; for the accent-colored period.</span></span></label>
+          <input class="f-input" id="ptitleHtml" placeholder='PDF Export<br><span class="accent-text">Engine</span><em>.</em>'>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Hero Description (lede)</label>
+          <textarea class="f-input f-textarea" id="plede"></textarea>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Hero Tag <span class="help-icon">?<span class="help-text">Short line shown on the hero image overlay, e.g. the function signature. HTML allowed for &lt;b&gt; emphasis.</span></span></label>
+          <input class="f-input" id="pheroTag" placeholder="exportToPDF22(options) — every option documented below">
+        </div>
+        <div class="f-group">
+          <label class="f-label">Email Subject Line <span class="help-icon">?<span class="help-text">Used as the mailto subject when someone orders implementation for this product.</span></span></label>
+          <input class="f-input" id="pmailSubject" placeholder="Product Name — Implementation Request">
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-switch"><input type="checkbox" id="pactive" checked><span class="toggle-slider"></span></label>
+          <span style="font-size:0.85rem">Active (visible on the site)</span>
+        </div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Stats <button type="button" class="repeat-add" onclick="addStat()"><i class="fa-solid fa-plus"></i> Add Stat</button></h3>
+        <div id="statsList"></div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Tech Stack <span class="help-icon">?<span class="help-text">Shown as chips at the bottom of the product page, each with a matching icon.</span></span></h3>
+        <div id="techList" style="display:flex;flex-wrap:wrap;gap:0.8rem"></div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Code Sections <button type="button" class="repeat-add" onclick="addCodeSection()"><i class="fa-solid fa-plus"></i> Add Section</button></h3>
+        <div class="f-hint" style="margin-bottom:1rem">Add as many as this product needs — one, two, five, whatever applies.</div>
+        <div id="codeList"></div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Comparison Table <span class="help-icon">?<span class="help-text">Optional. Any number of columns and rows — fully your call. Leave every column and row empty to hide this section on the product page entirely.</span></span></h3>
+
+        <div class="f-row">
+          <div class="f-group"><label class="f-label">Section Label</label><input class="f-input" id="pCompLabel" placeholder="Why Use It"></div>
+          <div class="f-group"><label class="f-label">Section Title</label><input class="f-input" id="pCompTitle" placeholder="How It Compares"></div>
+        </div>
+        <div class="f-group"><label class="f-label">Section Intro (optional)</label><input class="f-input" id="pCompSub" placeholder="See how this stacks up against JasperReports and hand-rolled PL/SQL."></div>
+
+        <div class="f-group">
+          <label class="f-label">Columns <button type="button" class="repeat-add" onclick="addCompColumn()" style="margin-left:0.6rem"><i class="fa-solid fa-plus"></i> Add Column</button></label>
+          <div class="f-hint" style="margin-bottom:0.6rem">First column is usually a "Feature" label and the rest are whatever you're comparing against — but nothing enforces that; they're just header text.</div>
+          <div id="compColumnsList" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.6rem"></div>
+        </div>
+
+        <div class="f-group">
+          <label class="f-label">Highlight Column <span class="help-icon">?<span class="help-text">Optional — visually highlights one column (e.g. your product's own) in the page's accent color. Pick None for no highlight.</span></span></label>
+          <select class="f-input" id="pCompHighlight"><option value="-1">None</option></select>
+        </div>
+
+        <div class="f-group">
+          <label class="f-label">Rows <button type="button" class="repeat-add" onclick="addCompRow()" style="margin-left:0.6rem"><i class="fa-solid fa-plus"></i> Add Row</button></label>
+          <div class="f-hint" style="margin-bottom:0.6rem">Type Yes / No / True / False (or ✓ / ✗) in a cell and it renders as a check or cross icon automatically. Anything else — "Limited", "$19 one-time", a feature name — renders as plain text.</div>
+          <div id="compRowsList"></div>
+        </div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Pricing <button type="button" class="repeat-add" onclick="addPriceCard()"><i class="fa-solid fa-plus"></i> Add Price Card</button></h3>
+        <div class="f-hint" style="margin-bottom:1rem">Usually two — Script License and Implementation — but any number works.</div>
+        <div id="priceList"></div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="saveBtn"><i class="fa-solid fa-floppy-disk"></i> Save Product</button>
+        <a href="dashboard.html" class="btn-outline">Cancel</a>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="../firebase-config.js"></script>
+<script src="../auth-guard.js"></script>
+<script src="../data-service.js"></script>
+<script src="admin-shell.js"></script>
+<script src="../theme.js"></script>
+<script>
+const TECH_OPTIONS = ['JavaScript (ES6+)','jQuery','jsPDF','jspdf-autotable','SweetAlert2','Oracle APEX','PL/SQL','ORDS / REST','HTML5','CSS3'];
+let allProducts = [];
+const editId = new URLSearchParams(location.search).get('id');
+
+requireAdmin(function(user, adminDoc){
+  if (typeof hideFullAdminLinksIfNeeded === 'function') hideFullAdminLinksIfNeeded(adminDoc.role);
+  renderTechCheckboxes();
+  fetchAllProductsAdmin().then(function(products){
+    allProducts = products;
+    if (editId){
+      const existing = products.find(function(p){ return p.id === editId; });
+      if (existing) loadIntoForm(existing);
+    }
+    if (!document.querySelectorAll('#statsList .repeat-item').length) addStat();
+    if (!document.querySelectorAll('#codeList .repeat-item').length) addCodeSection();
+    if (!document.querySelectorAll('#priceList .repeat-item').length){ addPriceCard(); addPriceCard(); }
+  });
+});
+
+function renderTechCheckboxes(){
+  document.getElementById('techList').innerHTML = TECH_OPTIONS.map(function(t){
+    return '<label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;background:var(--cream);border:1px solid var(--line);padding:0.5rem 0.8rem;border-radius:8px">' +
+      '<input type="checkbox" class="tech-cb" value="' + t + '"> ' + t + '</label>';
+  }).join('');
+}
+
+/* ---------- IMAGE UPLOAD (ImgBB + SweetAlert2) ---------- */
+document.getElementById('imgFile').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!IMGBB_API_KEY || IMGBB_API_KEY === 'YOUR_IMGBB_API_KEY'){
+    Swal.fire({ icon: 'warning', title: 'ImgBB key not set', text: 'Add IMGBB_API_KEY in firebase-config.js first, or paste an image URL manually.' });
+    return;
+  }
+
+  Swal.fire({ title: 'Uploading image…', allowOutsideClick: false, didOpen: function(){ Swal.showLoading(); } });
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY, { method: 'POST', body: formData })
+    .then(function(r){ return r.json(); })
+    .then(function(json){
+      if (!json.success) throw new Error(json.error && json.error.message || 'Upload failed');
+      document.getElementById('pboxImage').value = json.data.url;
+      document.getElementById('imgPreview').src = json.data.url;
+      Swal.fire({ icon: 'success', title: 'Image uploaded', timer: 1400, showConfirmButton: false });
+    })
+    .catch(function(err){
+      Swal.fire({ icon: 'error', title: 'Upload failed', text: err.message });
+    });
+});
+document.getElementById('pboxImage').addEventListener('input', function(){
+  document.getElementById('imgPreview').src = this.value;
+});
+
+document.getElementById('demoImgFile').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!IMGBB_API_KEY || IMGBB_API_KEY === 'YOUR_IMGBB_API_KEY'){
+    Swal.fire({ icon: 'warning', title: 'ImgBB key not set', text: 'Add IMGBB_API_KEY in firebase-config.js first, or paste an image URL manually.' });
+    return;
+  }
+
+  Swal.fire({ title: 'Uploading demo image…', allowOutsideClick: false, didOpen: function(){ Swal.showLoading(); } });
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  fetch('https://api.imgbb.com/1/upload?key=' + IMGBB_API_KEY, { method: 'POST', body: formData })
+    .then(function(r){ return r.json(); })
+    .then(function(json){
+      if (!json.success) throw new Error(json.error && json.error.message || 'Upload failed');
+      document.getElementById('pdemoImage').value = json.data.url;
+      document.getElementById('demoImgPreview').src = json.data.url;
+      Swal.fire({ icon: 'success', title: 'Demo image uploaded', timer: 1400, showConfirmButton: false });
+    })
+    .catch(function(err){
+      Swal.fire({ icon: 'error', title: 'Upload failed', text: err.message });
+    });
+});
+document.getElementById('pdemoImage').addEventListener('input', function(){
+  document.getElementById('demoImgPreview').src = this.value;
+});
+
+/* ---------- HERO MEDIA TYPE ---------- */
+function toggleHeroMediaType(){
+  const type = document.getElementById('pheroMediaType').value;
+  document.getElementById('heroMediaImageFields').style.display = (type === 'image') ? 'block' : 'none';
+  document.getElementById('heroMediaVideoFields').style.display = (type === 'video') ? 'block' : 'none';
+  document.getElementById('heroMediaSlideshowFields').style.display = (type === 'slideshow') ? 'block' : 'none';
+}
+
+function addHeroSlide(url){
+  const wrap = document.getElementById('heroSlideList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-group"><label class="f-label">Image URL</label><input class="f-input hero-slide-url" value="' + esc(url) + '" placeholder="https://…"></div>';
+  wrap.appendChild(row);
+}
+
+/* ---------- DEMO MEDIA TYPE ---------- */
+function toggleDemoMediaType(){
+  const type = document.getElementById('pdemoMediaType').value;
+  document.getElementById('demoMediaImageFields').style.display = (type === 'image') ? 'block' : 'none';
+  document.getElementById('demoMediaVideoFields').style.display = (type === 'video') ? 'block' : 'none';
+  document.getElementById('demoMediaSlideshowFields').style.display = (type === 'slideshow') ? 'block' : 'none';
+}
+
+function addSlide(url){
+  const wrap = document.getElementById('slideList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-group"><label class="f-label">Image URL</label><input class="f-input slide-url" value="' + esc(url) + '" placeholder="https://…"></div>';
+  wrap.appendChild(row);
+}
+
+/* ---------- STATS ---------- */
+function addStat(stat){
+  stat = stat || { n: '', l: '' };
+  const wrap = document.getElementById('statsList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-row">' +
+      '<div class="f-group"><label class="f-label">Number</label><input class="f-input stat-n" value="' + esc(stat.n) + '" placeholder="64"></div>' +
+      '<div class="f-group"><label class="f-label">Label</label><input class="f-input stat-l" value="' + esc(stat.l) + '" placeholder="Parameters"></div>' +
+    '</div>';
+  wrap.appendChild(row);
+}
+
+/* ---------- CODE SECTIONS ---------- */
+function addCodeSection(sec){
+  sec = sec || { kind: 'steps', title: '', sub: '', codeHtml: '', steps: [] };
+  const wrap = document.getElementById('codeList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  const isSteps = sec.kind === 'steps';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-group"><label class="f-label">Section Type</label>' +
+      '<select class="f-input cs-kind" onchange="toggleCodeKind(this)">' +
+        '<option value="steps"' + (isSteps ? ' selected' : '') + '>Quick Start (numbered steps)</option>' +
+        '<option value="full"' + (!isSteps ? ' selected' : '') + '>Full Reference (single titled code block)</option>' +
+      '</select>' +
+    '</div>' +
+    '<div class="cs-full-fields" style="display:' + (isSteps ? 'none' : 'block') + '">' +
+      '<div class="f-row">' +
+        '<div class="f-group"><label class="f-label">Title</label><input class="f-input cs-title" value="' + esc(sec.title) + '" placeholder="Full Reference Call"></div>' +
+        '<div class="f-group"><label class="f-label">Subtitle</label><input class="f-input cs-sub" value="' + esc(sec.sub) + '"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="cs-steps-wrap" style="display:' + (isSteps ? 'block' : 'none') + ';margin:0.5rem 0'  + '">' +
+      '<div class="f-hint" style="margin-bottom:0.5rem">Steps</div>' +
+      '<div class="cs-steps"></div>' +
+      '<button type="button" class="repeat-add" onclick="addStep(this)"><i class="fa-solid fa-plus"></i> Add Step</button>' +
+    '</div>' +
+    '<div class="f-group" style="margin-top:0.8rem"><label class="f-label">Code (HTML — wrap keywords in &lt;span class="k"&gt;, strings in &lt;span class="s"&gt;, comments in &lt;span class="c"&gt; for syntax color)</label><textarea class="f-input f-textarea cs-code" style="min-height:130px;font-family:var(--mono);font-size:0.8rem">' + esc(sec.codeHtml) + '</textarea></div>';
+  wrap.appendChild(row);
+  (sec.steps || []).forEach(function(s){ addStep(row.querySelector('.repeat-add'), s); });
+}
+
+function toggleCodeKind(select){
+  const item = select.closest('.repeat-item');
+  const isSteps = select.value === 'steps';
+  item.querySelector('.cs-full-fields').style.display = isSteps ? 'none' : 'block';
+  item.querySelector('.cs-steps-wrap').style.display = isSteps ? 'block' : 'none';
+}
+
+function addStep(addBtn, step){
+  step = step || { title: '', desc: '' };
+  const stepsWrap = addBtn.closest('.cs-steps-wrap').querySelector('.cs-steps');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.style.background = '#fff';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-group"><label class="f-label">Step Title</label><input class="f-input step-t" value="' + esc(step.title) + '"></div>' +
+    '<div class="f-group"><label class="f-label">Step Description</label><input class="f-input step-d" value="' + esc(step.desc) + '"></div>';
+  stepsWrap.appendChild(row);
+}
+
+/* ---------- COMPARISON TABLE ----------------------------------------
+   A true 2D grid, not a simple repeat-list — adding/removing a column
+   has to add/remove the matching cell in every existing row too, or the
+   saved data would have rows whose length doesn't match columns.length.
+   All the functions below exist to keep that in sync automatically;
+   nothing here assumes a fixed number of columns or rows. */
+function currentCompColumnCount(){
+  return document.querySelectorAll('#compColumnsList .comp-col-input').length;
+}
+
+function addCompColumn(value){
+  const wrap = document.getElementById('compColumnsList');
+  const idx = currentCompColumnCount();
+  const box = document.createElement('div');
+  box.style.cssText = 'display:flex;align-items:center;gap:0.3rem';
+  box.innerHTML =
+    '<input class="f-input comp-col-input" style="width:160px" value="' + esc(value || '') + '" placeholder="Column ' + (idx + 1) + '" oninput="refreshCompHighlightOptions()">' +
+    '<button type="button" class="repeat-remove" style="position:static" onclick="removeCompColumn(this)"><i class="fa-solid fa-xmark"></i></button>';
+  wrap.appendChild(box);
+
+  // A new column means every EXISTING row needs one more cell, in the
+  // same position, so row length always matches column count.
+  document.querySelectorAll('#compRowsList .comp-row').forEach(function(rowEl){
+    addCompCell(rowEl, '');
+  });
+  refreshCompHighlightOptions();
+}
+
+function removeCompColumn(btn){
+  const wrap = document.getElementById('compColumnsList');
+  const box = btn.closest('div');
+  const colIdx = Array.from(wrap.children).indexOf(box);
+  box.remove();
+  // Remove the matching cell from every row so row length keeps
+  // matching the new (smaller) column count.
+  document.querySelectorAll('#compRowsList .comp-row').forEach(function(rowEl){
+    const cells = rowEl.querySelectorAll('.comp-cell-wrap');
+    if (cells[colIdx]) cells[colIdx].remove();
+  });
+  refreshCompHighlightOptions();
+}
+
+function addCompCell(rowEl, value){
+  const cellsWrap = rowEl.querySelector('.comp-cells');
+  const cell = document.createElement('div');
+  cell.className = 'comp-cell-wrap';
+  cell.innerHTML = '<input class="f-input comp-cell-input" style="width:160px" value="' + esc(value || '') + '">';
+  cellsWrap.appendChild(cell);
+}
+
+function addCompRow(values){
+  const wrap = document.getElementById('compRowsList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item comp-row';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="comp-cells" style="display:flex;gap:0.5rem;flex-wrap:wrap"></div>';
+  wrap.appendChild(row);
+  // A new row always gets exactly as many cells as there are CURRENT
+  // columns right now — not a fixed number.
+  const colCount = currentCompColumnCount();
+  const vals = (values && Array.isArray(values.cells)) ? values.cells : (values || []);
+  for (let i = 0; i < colCount; i++){
+    addCompCell(row, vals[i]);
+  }
+}
+
+function refreshCompHighlightOptions(){
+  const sel = document.getElementById('pCompHighlight');
+  const current = sel.value;
+  const cols = Array.from(document.querySelectorAll('#compColumnsList .comp-col-input')).map(function(i){ return i.value; });
+  sel.innerHTML = '<option value="-1">None</option>' +
+    cols.map(function(c, i){ return '<option value="' + i + '">' + esc(c || ('Column ' + (i + 1))) + '</option>'; }).join('');
+  if (Number(current) < cols.length) sel.value = current;
+}
+
+/* ---------- PRICING ---------- */
+function addPriceCard(card){
+  card = card || { badge: '', featured: false, price: '', note: '', descHtml: '', items: [], ctaHref: '', ctaText: '', ctaIcon: 'fa-solid fa-cart-shopping', priceUSD: '' };
+  const wrap = document.getElementById('priceList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-row-3">' +
+      '<div class="f-group"><label class="f-label">Badge</label><input class="f-input pc-badge" value="' + esc(card.badge) + '" placeholder="Script License"></div>' +
+      '<div class="f-group"><label class="f-label">Price</label><input class="f-input pc-price" value="' + esc(card.price) + '" placeholder="$19"></div>' +
+      '<div class="f-group"><label class="f-label">Note</label><input class="f-input pc-note" value="' + esc(card.note) + '" placeholder="one-time"></div>' +
+    '</div>' +
+    '<div class="f-group"><label class="f-label">Description</label><textarea class="f-input f-textarea pc-desc">' + esc(card.descHtml) + '</textarea></div>' +
+    '<div class="f-group"><label class="f-label">Features (one per line)</label><textarea class="f-input f-textarea pc-items">' + esc((card.items || []).join('\n')) + '</textarea></div>' +
+    '<div class="f-row-3">' +
+      '<div class="f-group"><label class="f-label">Button Link</label><input class="f-input pc-href" value="' + esc(card.ctaHref) + '"></div>' +
+      '<div class="f-group"><label class="f-label">Button Text</label><input class="f-input pc-text" value="' + esc(card.ctaText) + '" placeholder="Buy on Gumroad"></div>' +
+      '<div class="f-group"><label class="f-label">Price (USD, for bundle math)</label><input class="f-input pc-usd" type="number" value="' + esc(card.priceUSD) + '"></div>' +
+    '</div>' +
+    '<label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem"><input type="checkbox" class="pc-featured" ' + (card.featured ? 'checked' : '') + '> Featured (dark highlighted card)</label>';
+  wrap.appendChild(row);
+}
+
+/* ---------- LOAD FOR EDIT ---------- */
+function loadIntoForm(p){
+  document.getElementById('formTitle').textContent = 'Edit: ' + (p.name || p.id);
+  document.getElementById('pid').value = p.id;
+  document.getElementById('pid').readOnly = true;
+  document.getElementById('pid').style.opacity = '0.65';
+  document.getElementById('pname').value = p.name || '';
+  document.getElementById('pshortMark').value = p.shortMark || '';
+  document.getElementById('peyebrow').value = p.eyebrow || '';
+  document.getElementById('pboxImage').value = p.boxImage || '';
+  document.getElementById('imgPreview').src = p.boxImage || '';
+  document.getElementById('pheroMediaType').value = p.heroMediaType || 'image';
+  document.getElementById('pheroVideoUrl').value = p.heroVideoUrl || '';
+  (p.heroSlideshowImages || []).forEach(addHeroSlide);
+  toggleHeroMediaType();
+
+  document.getElementById('pdemoImage').value = p.demoImage || '';
+  document.getElementById('demoImgPreview').src = p.demoImage || '';
+  // demoMediaType is new; older product docs only ever had `mediaType`,
+  // which — despite the admin form once labeling it "Hero Media Type" —
+  // always drove this demo section, never the hero. Falling back to it
+  // here so existing products keep showing exactly what they showed
+  // before, with no re-save required.
+  document.getElementById('pdemoMediaType').value = p.demoMediaType || p.mediaType || 'image';
+  document.getElementById('pvideoUrl').value = p.videoUrl || '';
+  (p.slideshowImages || []).forEach(addSlide);
+  toggleDemoMediaType();
+  document.getElementById('paccent').value = p.accent || '#1DBF73';
+  document.getElementById('paccentDeep').value = p.accentDeep || '#12653F';
+  document.getElementById('paccentDim').value = p.accentDim || '';
+  document.getElementById('ptitleHtml').value = p.titleHtml || '';
+  document.getElementById('plede').value = p.lede || '';
+  document.getElementById('pheroTag').value = p.heroTag || '';
+  document.getElementById('pmailSubject').value = p.mailSubject || '';
+  document.getElementById('pactive').checked = p.active !== false;
+
+  (p.stats || []).forEach(addStat);
+  (p.codeSections || []).forEach(addCodeSection);
+
+  const ct = p.comparisonTable || {};
+  document.getElementById('pCompLabel').value = ct.label || '';
+  document.getElementById('pCompTitle').value = ct.title || '';
+  document.getElementById('pCompSub').value = ct.sub || '';
+  document.getElementById('compColumnsList').innerHTML = '';
+  document.getElementById('compRowsList').innerHTML = '';
+  (ct.columns || []).forEach(addCompColumn);
+  (ct.rows || []).forEach(addCompRow);
+  refreshCompHighlightOptions();
+  document.getElementById('pCompHighlight').value = (typeof ct.highlightColumn === 'number') ? ct.highlightColumn : -1;
+
+  (p.pricing || []).forEach(function(c){
+    addPriceCard({
+      badge: c.badge, featured: c.featured, descHtml: c.descHtml, items: c.items,
+      ctaHref: c.ctaHref, ctaText: c.ctaText, ctaIcon: c.ctaIcon, priceUSD: c.priceUSD,
+      price: (c.amountHtml || '').match(/^[^<]*/)?.[0] || '',
+      note: (c.amountHtml || '').match(/<span>([^<]*)<\/span>/)?.[1] || ''
+    });
+  });
+
+  (p.techStack || []).forEach(function(t){
+    const cb = document.querySelector('.tech-cb[value="' + t + '"]');
+    if (cb) cb.checked = true;
+  });
+}
+
+/* ---------- SAVE ---------- */
+document.getElementById('productForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+
+  // Null-safe field readers — if an element is ever missing (a malformed
+  // row, a version mismatch, anything), these return a safe default
+  // instead of throwing "Cannot read properties of null". That's what
+  // was crashing the whole save before: one missing field aborted the
+  // entire submit handler with no way to tell which field caused it.
+  function val(scope, selector){
+    const el = scope.querySelector ? scope.querySelector(selector) : document.getElementById(selector);
+    return el ? el.value : '';
+  }
+  function checked(scope, selector){
+    const el = scope.querySelector(selector);
+    return el ? el.checked : false;
+  }
+
+  try {
+    const id = document.getElementById('pid').value.trim();
+    if (!id){
+      Swal.fire({ icon: 'error', title: 'Product ID is required', text: 'Fill in the Product ID (slug) field before saving.' });
+      return;
+    }
+
+    const stats = Array.from(document.querySelectorAll('#statsList .repeat-item')).map(function(row){
+      return { n: val(row, '.stat-n'), l: val(row, '.stat-l') };
+    });
+
+    const techStack = Array.from(document.querySelectorAll('.tech-cb:checked')).map(function(cb){ return cb.value; });
+
+    const codeSections = [];
+    document.querySelectorAll('#codeList .repeat-item').forEach(function(row){
+      try {
+        const kind = val(row, '.cs-kind');
+        if (kind === 'steps'){
+          const steps = Array.from(row.querySelectorAll('.cs-steps .repeat-item')).map(function(s){
+            return { title: val(s, '.step-t'), desc: val(s, '.step-d') };
+          });
+          codeSections.push({ kind: 'steps', steps: steps, codeHtml: val(row, '.cs-code') });
+        } else {
+          codeSections.push({ kind: 'full', title: val(row, '.cs-title'), sub: val(row, '.cs-sub'), codeHtml: val(row, '.cs-code') });
+        }
+      } catch (rowErr){
+        console.error('Skipped a malformed code section row', rowErr);
+      }
+    });
+
+    const pricing = [];
+    document.querySelectorAll('#priceList .repeat-item').forEach(function(row){
+      try {
+        const price = val(row, '.pc-price');
+        const note = val(row, '.pc-note');
+        const isFeatured = checked(row, '.pc-featured');
+        pricing.push({
+          badge: val(row, '.pc-badge'),
+          featured: isFeatured,
+          amountHtml: price + (note ? '<span>' + note + '</span>' : ''),
+          descHtml: val(row, '.pc-desc'),
+          items: splitLines(val(row, '.pc-items')),
+          ctaHref: val(row, '.pc-href'),
+          ctaText: val(row, '.pc-text'),
+          ctaIcon: isFeatured ? 'fa-solid' : 'fa-brands',
+          priceUSD: Number(val(row, '.pc-usd')) || 0
+        });
+      } catch (rowErr){
+        console.error('Skipped a malformed pricing row', rowErr);
+      }
+    });
+
+    const boxImage = document.getElementById('pboxImage').value.trim();
+    const heroSlideshowImages = Array.from(document.querySelectorAll('#heroSlideList .hero-slide-url')).map(function(i){ return i.value.trim(); }).filter(Boolean);
+    const slideshowImages = Array.from(document.querySelectorAll('#slideList .slide-url')).map(function(i){ return i.value.trim(); }).filter(Boolean);
+
+    // Deliberately NOT filtering out blank columns here — doing so would
+    // shift column indices out of alignment with each row's cell array
+    // (which are built/removed in lockstep with columns in the UI, so
+    // they're always the same length as each other). A comparison table
+    // only counts as "configured" if at least one column AND one cell
+    // somewhere actually has content; otherwise the whole thing is saved
+    // as null so the product page hides the section, per how
+    // renderComparisonTable() checks for it.
+    const compColumns = Array.from(document.querySelectorAll('#compColumnsList .comp-col-input')).map(function(i){ return i.value.trim(); });
+    const compRows = Array.from(document.querySelectorAll('#compRowsList .comp-row')).map(function(rowEl){
+      return Array.from(rowEl.querySelectorAll('.comp-cell-input')).map(function(i){ return i.value.trim(); });
+    });
+    const hasComparisonData = compColumns.some(Boolean) && compRows.some(function(row){ return row.some(Boolean); });
+    const comparisonTable = hasComparisonData ? {
+      label: document.getElementById('pCompLabel').value.trim(),
+      title: document.getElementById('pCompTitle').value.trim(),
+      sub: document.getElementById('pCompSub').value.trim(),
+      highlightColumn: Number(document.getElementById('pCompHighlight').value),
+      columns: compColumns,
+      rows: compRows
+    } : null;
+
+    const data = {
+      name: document.getElementById('pname').value.trim(),
+      shortMark: document.getElementById('pshortMark').value.trim(),
+      eyebrow: document.getElementById('peyebrow').value.trim(),
+      boxImage: boxImage,
+      heroMediaType: (document.getElementById('pheroMediaType') || {}).value || 'image',
+      heroVideoUrl: (document.getElementById('pheroVideoUrl') || {}).value ? document.getElementById('pheroVideoUrl').value.trim() : '',
+      heroSlideshowImages: heroSlideshowImages,
+      demoImage: document.getElementById('pdemoImage').value.trim(),
+      demoMediaType: (document.getElementById('pdemoMediaType') || {}).value || 'image',
+      videoUrl: (document.getElementById('pvideoUrl') || {}).value ? document.getElementById('pvideoUrl').value.trim() : '',
+      slideshowImages: slideshowImages,
+      comparisonTable: comparisonTable,
+      accent: document.getElementById('paccent').value,
+      accentDeep: document.getElementById('paccentDeep').value,
+      accentDim: document.getElementById('paccentDim').value.trim(),
+      titleHtml: document.getElementById('ptitleHtml').value.trim(),
+      lede: document.getElementById('plede').value.trim(),
+      heroTag: document.getElementById('pheroTag').value.trim(),
+      mailSubject: document.getElementById('pmailSubject').value.trim(),
+      active: document.getElementById('pactive').checked,
+      stats: stats,
+      techStack: techStack,
+      codeSections: codeSections,
+      pricing: pricing
+    };
+
+    if (!editId) data.guideSections = [];
+
+    Swal.fire({ title: 'Saving…', allowOutsideClick: false, didOpen: function(){ Swal.showLoading(); } });
+
+    saveProduct(id, data).then(function(){
+      msg.textContent = 'Saved.';
+      msg.className = 'form-msg show ok';
+      Swal.fire({ icon: 'success', title: 'Product saved', text: boxImage ? 'Image URL saved: ' + boxImage : undefined, timer: 1800, showConfirmButton: false })
+        .then(function(){ location.href = 'dashboard.html'; });
+    }).catch(function(err){
+      console.error('saveProduct failed', err);
+      Swal.fire({ icon: 'error', title: 'Could not save', text: (err.code ? '[' + err.code + '] ' : '') + err.message });
+    });
+  } catch (err){
+    console.error('Unexpected error building product data', err);
+    Swal.fire({ icon: 'error', title: 'Something went wrong', text: err.message + ' — open the browser console (F12) for the exact line, and let me know what it says.' });
+  }
+});
+
+function splitLines(v){ return v.split('\n').map(function(s){ return s.trim(); }).filter(Boolean); }
+function esc(v){ return (v || '').toString().replace(/"/g, '&quot;'); }
+</script>
+</body>
+</html>

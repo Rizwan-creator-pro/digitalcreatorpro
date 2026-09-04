@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Log | Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<button class="hamburger-btn" id="hamburgerBtn" type="button"><i class="fa-solid fa-bars"></i></button>
+<div class="admin-overlay" id="adminOverlay"></div>
+
+<div class="admin-shell">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <div class="admin-brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+      <div class="admin-brand-text">APEX Store<span>Admin Center</span></div>
+    </div>
+
+    <div class="admin-nav-top">
+      <div class="admin-nav-section-label">Navigation</div>
+      <a class="admin-nav-link" href="dashboard.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a class="admin-nav-link" href="product-form.html"><i class="fa-solid fa-boxes-stacked"></i> <span>Products</span></a>
+      <a class="admin-nav-link" href="guide-form.html"><i class="fa-solid fa-book-open"></i> <span>Guides</span></a>
+      <a class="admin-nav-link" id="settingsNavLink" href="settings.html"><i class="fa-solid fa-sliders"></i> <span>Site Settings</span></a>
+      <a class="admin-nav-link" href="analytics.html"><i class="fa-solid fa-chart-line"></i> <span>Analytics</span></a>
+    </div>
+
+    <div class="admin-nav-bottom">
+      <div class="admin-nav-section-label">System</div>
+      <a class="admin-nav-link active" id="auditNavLink" href="audit.html"><i class="fa-solid fa-shield-halved"></i> <span>Audit Log</span></a>
+      <a class="admin-nav-link" id="seedNavLink" href="seed.html"><i class="fa-solid fa-cloud-arrow-up"></i> <span>Seed Data</span></a>
+      <a class="admin-nav-link" href="../index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>View Store</span></a>
+      <button class="admin-nav-link theme-toggle" type="button" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i> <span>Appearance</span></button>
+      <button class="admin-nav-link" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket"></i> <span>Log Out</span></button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="fluent-ambient-backdrop"></div>
+    <div class="admin-head">
+      <div class="admin-title">Audit Log</div>
+      <div class="f-hint">Last 200 actions — who created, updated, or deleted what, and when.</div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead>
+        <tbody id="auditBody"><tr><td colspan="5" style="text-align:center;color:var(--ink-faint)">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="../firebase-config.js"></script>
+<script src="../auth-guard.js"></script>
+<script src="../data-service.js"></script>
+<script src="admin-shell.js"></script>
+<script src="../theme.js"></script>
+<script>
+const ACTION_LABEL = {
+  create: 'Created', update: 'Updated', delete: 'Deleted',
+  activate: 'Activated', deactivate: 'Deactivated', 'update-guide': 'Updated Guide',
+  'approve-admin': 'Approved Admin', 'block-admin': 'Blocked Admin',
+  'unblock-admin': 'Unblocked Admin', 'remove-admin-record': 'Removed Admin'
+};
+const ACTION_ICON = {
+  create: 'fa-solid fa-plus', update: 'fa-solid fa-pen', delete: 'fa-solid fa-trash',
+  activate: 'fa-solid fa-power-off', deactivate: 'fa-solid fa-power-off', 'update-guide': 'fa-solid fa-book',
+  'approve-admin': 'fa-solid fa-check', 'block-admin': 'fa-solid fa-ban',
+  'unblock-admin': 'fa-solid fa-lock-open', 'remove-admin-record': 'fa-solid fa-user-minus'
+};
+
+requireAdmin(function(){
+  fetchAuditLog(200).then(renderAudit);
+});
+
+function renderAudit(entries){
+  const body = document.getElementById('auditBody');
+  if (!entries.length){
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-faint)">No actions recorded yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = entries.map(function(e){
+    const when = e.at && e.at.toDate ? e.at.toDate().toLocaleString() : '—';
+    const details = e.extra && e.extra.name ? e.extra.name : (e.extra && e.extra.sections !== undefined ? e.extra.sections + ' sections' : '');
+    return '<tr>' +
+      '<td style="white-space:nowrap;font-family:var(--mono);font-size:0.75rem">' + when + '</td>' +
+      '<td>' + (e.adminEmail || 'unknown') + '</td>' +
+      '<td><i class="' + (ACTION_ICON[e.action] || 'fa-solid fa-circle') + '" style="margin-right:0.4rem;color:var(--ink-faint)"></i>' + (ACTION_LABEL[e.action] || e.action) + '</td>' +
+      '<td>' + e.entity + ' <code>' + e.entityId + '</code></td>' +
+      '<td>' + details + '</td>' +
+    '</tr>';
+  }).join('');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics | Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<button class="hamburger-btn" id="hamburgerBtn" type="button"><i class="fa-solid fa-bars"></i></button>
+<div class="admin-overlay" id="adminOverlay"></div>
+
+<div class="admin-shell">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <div class="admin-brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+      <div class="admin-brand-text">APEX Store<span>Admin Center</span></div>
+    </div>
+
+    <div class="admin-nav-top">
+      <div class="admin-nav-section-label">Navigation</div>
+      <a class="admin-nav-link" href="dashboard.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a class="admin-nav-link" href="product-form.html"><i class="fa-solid fa-boxes-stacked"></i> <span>Products</span></a>
+      <a class="admin-nav-link" href="guide-form.html"><i class="fa-solid fa-book-open"></i> <span>Guides</span></a>
+      <a class="admin-nav-link" id="settingsNavLink" href="settings.html"><i class="fa-solid fa-sliders"></i> <span>Site Settings</span></a>
+      <a class="admin-nav-link active" href="analytics.html"><i class="fa-solid fa-chart-line"></i> <span>Analytics</span></a>
+    </div>
+
+    <div class="admin-nav-bottom">
+      <div class="admin-nav-section-label">System</div>
+      <a class="admin-nav-link" id="auditNavLink" href="audit.html"><i class="fa-solid fa-shield-halved"></i> <span>Audit Log</span></a>
+      <a class="admin-nav-link" id="seedNavLink" href="seed.html"><i class="fa-solid fa-cloud-arrow-up"></i> <span>Seed Data</span></a>
+      <a class="admin-nav-link" href="../index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>View Store</span></a>
+      <button class="admin-nav-link theme-toggle" type="button" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i> <span>Appearance</span></button>
+      <button class="admin-nav-link" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket"></i> <span>Log Out</span></button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="fluent-ambient-backdrop"></div>
+    <div class="admin-head">
+      <div class="admin-title">Analytics</div>
+      <div class="f-hint">Last 2,000 pageviews</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.4rem">
+      <input type="date" class="f-input" id="filterFrom" style="width:auto" title="From date">
+      <span class="f-hint">to</span>
+      <input type="date" class="f-input" id="filterTo" style="width:auto" title="To date">
+      <input type="text" class="f-input" id="filterLocation" placeholder="Location (city, region, country)" style="width:auto;min-width:210px">
+      <input type="text" class="f-input" id="filterIp" placeholder="IP contains…" style="width:auto;min-width:150px">
+      <button class="btn-outline" id="filterApplyBtn" style="padding:0.6rem 1rem;font-size:0.82rem"><i class="fa-solid fa-filter"></i> Filter</button>
+      <button class="btn-outline" id="filterClearBtn" style="padding:0.6rem 1rem;font-size:0.82rem">Clear</button>
+      <span class="f-hint" id="filterSummary" style="margin-left:auto"></span>
+    </div>
+
+    <div class="admin-cards" id="statCards">
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Total Pageviews</div></div>
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Countries</div></div>
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Pages Tracked</div></div>
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Today</div></div>
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Exact GPS Location</div></div>
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Nearest Location (IP)</div></div>
+    </div>
+
+    <div class="admin-chart-card" style="margin-bottom:1.2rem">
+      <h3>Daily Visitors</h3>
+      <div class="admin-chart" id="chartTime" style="height:280px"></div>
+    </div>
+
+    <div class="admin-chart-card" style="margin-bottom:1.2rem">
+      <h3>Visitor Locations <span class="f-hint" style="margin-left:0.4rem">exact lat/long from IP lookup, where available</span></h3>
+      <div style="position:relative">
+        <div id="visitorMap" style="height:360px;border-radius:14px;overflow:hidden"></div>
+        <div id="mapNoData" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.02);pointer-events:none"><span class="f-hint">No located visits match this filter</span></div>
+      </div>
+      <div class="f-hint" style="margin-top:0.6rem;display:flex;gap:1.4rem">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#1DBF73;margin-right:0.4rem"></span>Nearest location (IP)</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#F59E0B;margin-right:0.4rem"></span>Exact GPS location</span>
+      </div>
+    </div>
+
+    <div class="admin-charts">
+      <div class="admin-chart-card"><h3>Visitors by Country</h3><div class="admin-chart" id="chartCountry"></div></div>
+      <div class="admin-chart-card"><h3>Views by Page</h3><div class="admin-chart" id="chartPages"></div></div>
+      <div class="admin-chart-card"><h3>Visitors by OS</h3><div class="admin-chart" id="chartOS"></div></div>
+      <div class="admin-chart-card"><h3>Visitors by Browser</h3><div class="admin-chart" id="chartBrowser"></div></div>
+      <div class="admin-chart-card"><h3>Visitors by Province / Region</h3><div class="admin-chart" id="chartProvince"></div></div>
+      <div class="admin-chart-card"><h3>Visitors by City</h3><div class="admin-chart" id="chartCity"></div></div>
+      <div class="admin-chart-card"><h3>Visitors by Country (Count)</h3><div class="admin-chart" id="chartCountryCount"></div></div>
+    </div>
+
+    <div class="admin-head" style="margin-top:0.6rem;margin-bottom:1rem">
+      <div class="admin-title" style="font-size:1.1rem">Session Report</div>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>#</th><th>Date</th><th>IP</th><th>Location</th><th>Device</th><th>Browser / OS</th><th>Page</th><th>Source</th><th></th></tr></thead>
+        <tbody id="reportBody"><tr><td colspan="9" style="text-align:center;color:var(--ink-faint)">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script src="../firebase-config.js"></script>
+<script src="../auth-guard.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="../data-service.js"></script>
+<script src="admin-shell.js"></script>
+<script src="../theme.js"></script>
+<script>
+let _allViews = [];
+let map, markersLayer;
+let timeChart, countryChart, pageChart, osChart, browserChart, provinceChart, cityChart, countryCountChart;
+
+requireAdmin(function(user, adminDoc){
+  if (typeof hideFullAdminLinksIfNeeded === 'function') hideFullAdminLinksIfNeeded(adminDoc.role);
+  initMap();
+  fetchPageviews(2000).then(function(views){
+    _allViews = views;
+    renderAll(views);
+  });
+});
+
+document.getElementById('filterApplyBtn').addEventListener('click', applyFilters);
+document.getElementById('filterClearBtn').addEventListener('click', function(){
+  document.getElementById('filterFrom').value = '';
+  document.getElementById('filterTo').value = '';
+  document.getElementById('filterLocation').value = '';
+  document.getElementById('filterIp').value = '';
+  renderAll(_allViews);
+});
+
+/* ---------- FILTERING ----------------------------------------------
+   One filter set now drives everything below it — stat cards, all
+   three charts, the map, and the table — instead of just the table
+   like before. Date range, a free-text location match against
+   city/region/country, and a free-text IP match (substring, so a
+   partial IP like "203.0.113." works to find a whole subnet). */
+function applyFilters(){
+  const from = document.getElementById('filterFrom').value;
+  const to = document.getElementById('filterTo').value;
+  const locationQ = document.getElementById('filterLocation').value.trim().toLowerCase();
+  const ipQ = document.getElementById('filterIp').value.trim().toLowerCase();
+
+  const filtered = _allViews.filter(function(v){
+    if (from || to){
+      if (!v.at || !v.at.toDate) return false;
+      const day = v.at.toDate().toISOString().slice(0, 10);
+      if (from && day < from) return false;
+      if (to && day > to) return false;
+    }
+    if (locationQ){
+      const loc = [v.city, v.region, v.country].filter(Boolean).join(' ').toLowerCase();
+      if (!loc.includes(locationQ)) return false;
+    }
+    if (ipQ){
+      if (!(v.ip || '').toLowerCase().includes(ipQ)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('filterSummary').textContent =
+    (from || to || locationQ || ipQ) ? ('Showing ' + filtered.length + ' of ' + _allViews.length + ' pageviews') : '';
+
+  renderAll(filtered);
+}
+
+function renderAll(views){
+  const agg = computeAggregates(views);
+  renderStatCards(views, agg);
+  updateMapMarkers(views);
+  renderCharts(views, agg);
+  renderReportTable(views);
+}
+
+/* ---------- shared aggregation --------------------------------------
+   Stat cards and the three charts all need the same grouped counts —
+   computed once per render instead of each one looping the (possibly
+   large) views array separately. */
+function computeAggregates(views){
+  const byPage = {}, byCountry = {}, byDay = {}, byDayVisitors = {};
+  const byOS = {}, byBrowser = {}, byRegion = {}, byCity = {};
+  const today = new Date().toISOString().slice(0, 10);
+  let todayCount = 0, preciseCount = 0;
+
+  views.forEach(function(v){
+    const page = v.path || 'unknown';
+    byPage[page] = (byPage[page] || 0) + 1;
+
+    const country = v.country || 'Unknown';
+    byCountry[country] = (byCountry[country] || 0) + 1;
+
+    const os = v.os || 'Unknown';
+    byOS[os] = (byOS[os] || 0) + 1;
+
+    const browser = v.browser || 'Unknown';
+    byBrowser[browser] = (byBrowser[browser] || 0) + 1;
+
+    // region/city are whatever the geo provider returned — genuinely
+    // absent for visits where every provider in the fallback chain
+    // failed, so those land under one shared "Unknown" bucket rather
+    // than being silently dropped from the chart.
+    const region = v.region || 'Unknown';
+    byRegion[region] = (byRegion[region] || 0) + 1;
+
+    const city = v.city || 'Unknown';
+    byCity[city] = (byCity[city] || 0) + 1;
+
+    const day = v.at && v.at.toDate ? v.at.toDate().toISOString().slice(0, 10) : 'unknown';
+    byDay[day] = (byDay[day] || 0) + 1;
+    if (day !== 'unknown'){
+      if (!byDayVisitors[day]) byDayVisitors[day] = new Set();
+      // IP is the closest thing we have to a device fingerprint — this
+      // site doesn't collect a real browser fingerprint, so repeat visits
+      // from the same IP count as one visitor for that day.
+      byDayVisitors[day].add(v.ip || ('anon-' + Math.random()));
+    }
+    if (day === today) todayCount++;
+    if (v.locationSource === 'precise') preciseCount++;
+  });
+
+  return {
+    byPage: byPage, byCountry: byCountry, byDay: byDay, byDayVisitors: byDayVisitors,
+    byOS: byOS, byBrowser: byBrowser, byRegion: byRegion, byCity: byCity,
+    todayCount: todayCount, preciseCount: preciseCount
+  };
+}
+
+/* ---------- stat cards ------------------------------------------- */
+function renderStatCards(views, agg){
+  const nums = [
+    views.length,
+    Object.keys(agg.byCountry).length,
+    Object.keys(agg.byPage).length,
+    agg.todayCount,
+    agg.preciseCount,
+    views.length - agg.preciseCount
+  ];
+  document.querySelectorAll('#statCards .admin-card-n').forEach(function(el, i){ el.textContent = nums[i]; });
+}
+
+/* ---------- report table ------------------------------------------- */
+function renderReportTable(views){
+  const body = document.getElementById('reportBody');
+  if (!views.length){
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--ink-faint)">No visits match this filter.</td></tr>';
+    return;
+  }
+  body.innerHTML = views.map(function(v, i){
+    const when = v.at && v.at.toDate ? v.at.toDate().toLocaleString() : '—';
+    const location = [v.city, v.region, v.country].filter(Boolean).join(', ') || '—';
+    const device = v.device || '—';
+    const browserOs = [v.browser, v.os].filter(Boolean).join(' · ') || '—';
+    const sourceLabel = v.locationSource === 'precise' ? 'Exact GPS' : 'IP (nearest)';
+    return '<tr>' +
+      '<td>' + (i + 1) + '</td>' +
+      '<td style="white-space:nowrap;font-family:var(--mono);font-size:0.74rem">' + when + '</td>' +
+      '<td style="font-family:var(--mono);font-size:0.78rem">' + (v.ip || '—') + '</td>' +
+      '<td>' + location + '</td>' +
+      '<td>' + device + '</td>' +
+      '<td style="font-size:0.8rem">' + browserOs + '</td>' +
+      '<td><code>' + (v.path || '—') + '</code></td>' +
+      '<td><span class="f-hint">' + sourceLabel + '</span></td>' +
+      '<td><button class="icon-btn danger" title="Delete" onclick="deleteReportRow(\'' + v.id + '\')"><i class="fa-solid fa-trash"></i></button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function deleteReportRow(id){
+  Swal.fire({
+    icon: 'warning', title: 'Delete this record?', text: 'This cannot be undone.',
+    showCancelButton: true, confirmButtonText: 'Delete', confirmButtonColor: '#9c2b2b'
+  }).then(function(result){
+    if (!result.isConfirmed) return;
+    deletePageview(id).then(function(){
+      _allViews = _allViews.filter(function(v){ return v.id !== id; });
+      applyFilters();
+    }).catch(function(err){
+      // Previously this call had no .catch() at all — if Firestore
+      // rejected the delete, nothing happened: no error, no removal,
+      // total silence. That's exactly what "delete doesn't work" looks
+      // like from the admin side. Most likely cause: Firestore Security
+      // Rules grant `create` on pageviews to anonymous public visitors
+      // (required — that's how pageview tracking works at all) but were
+      // never given a matching `delete` rule for authenticated admins.
+      // Check Firebase Console → Firestore Database → Rules for a
+      // `pageviews` match block and confirm it allows delete when
+      // request.auth != null.
+      Swal.fire({
+        icon: 'error',
+        title: 'Delete failed',
+        text: (err.code ? '[' + err.code + '] ' : '') + (err.message || 'Unknown error') +
+          (err.code === 'permission-denied' ? ' — check Firestore Security Rules allow delete on pageviews for signed-in admins.' : '')
+      });
+    });
+  });
+}
+
+/* ---------- map ------------------------------------------------------
+   Leaflet's L.map() can only be called ONCE per container — calling it
+   again on a filter change throws "Map container is already
+   initialized." So the map itself is created once here; every filter
+   change just clears and re-adds markers via updateMapMarkers(). */
+function initMap(){
+  map = L.map('visitorMap', { scrollWheelZoom: false }).setView([20, 10], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+  }).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+}
+
+function updateMapMarkers(views){
+  markersLayer.clearLayers();
+  const noDataEl = document.getElementById('mapNoData');
+  const withGeo = views.filter(function(v){ return typeof v.lat === 'number' && typeof v.lng === 'number'; });
+
+  if (!withGeo.length){
+    noDataEl.style.display = 'flex';
+    return;
+  }
+  noDataEl.style.display = 'none';
+
+  // Group visits that round to the same spot so repeat visitors from one
+  // city don't draw dozens of overlapping pins. Grouped separately by
+  // source so a precise-GPS cluster and an IP-estimated cluster at
+  // roughly the same spot don't get merged into one color.
+  const groups = {};
+  withGeo.forEach(function(v){
+    const source = v.locationSource === 'precise' ? 'precise' : 'ip';
+    const key = source + ':' + v.lat.toFixed(2) + ',' + v.lng.toFixed(2);
+    if (!groups[key]) groups[key] = { lat: v.lat, lng: v.lng, count: 0, city: v.city, country: v.country, source: source };
+    groups[key].count++;
+  });
+
+  const bounds = [];
+  Object.values(groups).forEach(function(g){
+    const radius = Math.min(6 + Math.sqrt(g.count) * 4, 28);
+    const isPrecise = g.source === 'precise';
+    const marker = L.circleMarker([g.lat, g.lng], {
+      radius: radius,
+      color: isPrecise ? '#B45309' : '#12653F',
+      fillColor: isPrecise ? '#F59E0B' : '#1DBF73',
+      fillOpacity: 0.55, weight: 2
+    }).addTo(markersLayer);
+    marker.bindPopup(
+      '<b>' + (g.city || 'Unknown city') + (g.country ? ', ' + g.country : '') + '</b><br>' +
+      g.count + ' visit' + (g.count === 1 ? '' : 's') + '<br>' +
+      '<span style="font-size:11px;color:' + (isPrecise ? '#B45309' : '#12653F') + '">' + (isPrecise ? 'Exact GPS location' : 'Nearest location (IP)') + '</span>'
+    );
+    bounds.push([g.lat, g.lng]);
+  });
+  if (bounds.length) map.fitBounds(bounds, { padding: [30, 30], maxZoom: 6 });
+}
+
+/* ---------- charts -----------------------------------------------
+   Instances are created once (echarts.init) and every subsequent
+   filter change reuses the same instance via setOption(option, true) —
+   the `true` (notMerge) argument fully replaces categories/series
+   instead of merging with the previous option, so a filtered-down
+   x-axis doesn't retain stale categories from the unfiltered view. */
+function renderCharts(views, agg){
+  const days = Object.keys(agg.byDay).filter(function(d){ return d !== 'unknown'; }).sort();
+  if (!timeChart) timeChart = echarts.init(document.getElementById('chartTime'));
+  timeChart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { top: 0, textStyle: { fontFamily: 'Inter', fontSize: 11 } },
+    grid: { left: 40, right: 20, top: 36, bottom: 40 },
+    xAxis: { type: 'category', data: days, axisLabel: { fontSize: 10 } },
+    yAxis: { type: 'value' },
+    series: [
+      { name: 'Pageviews', type: 'line', data: days.map(function(d){ return agg.byDay[d]; }), smooth: true, itemStyle: { color: '#1DBF73' }, areaStyle: { opacity: 0.12 } },
+      { name: 'Unique Visitors (by IP)', type: 'line', data: days.map(function(d){ return agg.byDayVisitors[d] ? agg.byDayVisitors[d].size : 0; }), smooth: true, itemStyle: { color: '#3B82F6' }, areaStyle: { opacity: 0.08 } }
+    ]
+  }, true);
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const donutBorderColor = isDark ? '#1A1A1A' : '#fff';
+
+  const countryEntries = Object.entries(agg.byCountry).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 8);
+  if (!countryChart) countryChart = echarts.init(document.getElementById('chartCountry'));
+  countryChart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0, textStyle: { fontFamily: 'Inter', fontSize: 10 } },
+    series: [{
+      type: 'pie', radius: ['40%', '68%'], avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 10, borderColor: donutBorderColor, borderWidth: 2 },
+      label: { show: false, position: 'center' },
+      emphasis: { label: { show: true, fontSize: 18, fontWeight: 'bold', fontFamily: 'Space Grotesk' } },
+      labelLine: { show: false },
+      data: countryEntries.map(function(e){ return { name: e[0], value: e[1] }; })
+    }]
+  }, true);
+
+  const pageEntries = Object.entries(agg.byPage).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
+  if (!pageChart) pageChart = echarts.init(document.getElementById('chartPages'));
+  pageChart.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: 90, right: 20, top: 10, bottom: 20 },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: pageEntries.map(function(e){ return e[0]; }).reverse(), axisLabel: { fontSize: 10 } },
+    series: [{ type: 'bar', data: pageEntries.map(function(e){ return e[1]; }).reverse(), itemStyle: { color: '#121212', borderRadius: [0, 4, 4, 0] }, barWidth: '55%' }]
+  }, true);
+
+  const osEntries = Object.entries(agg.byOS).sort(function(a, b){ return b[1] - a[1]; });
+  if (!osChart) osChart = echarts.init(document.getElementById('chartOS'));
+  osChart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0, textStyle: { fontFamily: 'Inter', fontSize: 10 } },
+    series: [{
+      type: 'pie', radius: ['40%', '68%'], avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 10, borderColor: donutBorderColor, borderWidth: 2 },
+      label: { show: false, position: 'center' },
+      emphasis: { label: { show: true, fontSize: 18, fontWeight: 'bold', fontFamily: 'Space Grotesk' } },
+      labelLine: { show: false },
+      data: osEntries.map(function(e){ return { name: e[0], value: e[1] }; })
+    }]
+  }, true);
+
+  const browserEntries = Object.entries(agg.byBrowser).sort(function(a, b){ return b[1] - a[1]; });
+  if (!browserChart) browserChart = echarts.init(document.getElementById('chartBrowser'));
+  browserChart.setOption({
+    tooltip: { trigger: 'item' },
+    legend: { bottom: 0, textStyle: { fontFamily: 'Inter', fontSize: 10 } },
+    series: [{
+      type: 'pie', radius: ['40%', '68%'], avoidLabelOverlap: false,
+      itemStyle: { borderRadius: 10, borderColor: donutBorderColor, borderWidth: 2 },
+      label: { show: false, position: 'center' },
+      emphasis: { label: { show: true, fontSize: 18, fontWeight: 'bold', fontFamily: 'Space Grotesk' } },
+      labelLine: { show: false },
+      data: browserEntries.map(function(e){ return { name: e[0], value: e[1] }; })
+    }]
+  }, true);
+
+  // Province/region and city can both have a much longer tail than OS or
+  // browser (dozens of distinct cities is normal, dozens of OSes is not),
+  // so these use the same top-N horizontal bar pattern as Views by Page
+  // rather than a donut, which gets unreadable past a handful of slices.
+  const provinceEntries = Object.entries(agg.byRegion).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
+  if (!provinceChart) provinceChart = echarts.init(document.getElementById('chartProvince'));
+  provinceChart.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: 90, right: 20, top: 10, bottom: 20 },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: provinceEntries.map(function(e){ return e[0]; }).reverse(), axisLabel: { fontSize: 10 } },
+    series: [{ type: 'bar', data: provinceEntries.map(function(e){ return e[1]; }).reverse(), itemStyle: { color: '#3B82F6', borderRadius: [0, 4, 4, 0] }, barWidth: '55%' }]
+  }, true);
+
+  const cityEntries = Object.entries(agg.byCity).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
+  if (!cityChart) cityChart = echarts.init(document.getElementById('chartCity'));
+  cityChart.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: 90, right: 20, top: 10, bottom: 20 },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: cityEntries.map(function(e){ return e[0]; }).reverse(), axisLabel: { fontSize: 10 } },
+    series: [{ type: 'bar', data: cityEntries.map(function(e){ return e[1]; }).reverse(), itemStyle: { color: '#F59E0B', borderRadius: [0, 4, 4, 0] }, barWidth: '55%' }]
+  }, true);
+
+  // Same data as the Country donut above (agg.byCountry, no new
+  // aggregation needed) — a bar shows exact counts per country at a
+  // glance, which a donut's hover-only tooltip doesn't.
+  const countryCountEntries = Object.entries(agg.byCountry).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
+  if (!countryCountChart) countryCountChart = echarts.init(document.getElementById('chartCountryCount'));
+  countryCountChart.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: 90, right: 20, top: 10, bottom: 20 },
+    xAxis: { type: 'value' },
+    yAxis: { type: 'category', data: countryCountEntries.map(function(e){ return e[0]; }).reverse(), axisLabel: { fontSize: 10 } },
+    series: [{ type: 'bar', data: countryCountEntries.map(function(e){ return e[1]; }).reverse(), itemStyle: { color: '#1DBF73', borderRadius: [0, 4, 4, 0] }, barWidth: '55%' }]
+  }, true);
+}
+
+window.addEventListener('resize', function(){
+  if (timeChart) timeChart.resize();
+  if (countryChart) countryChart.resize();
+  if (pageChart) pageChart.resize();
+  if (osChart) osChart.resize();
+  if (browserChart) browserChart.resize();
+  if (provinceChart) provinceChart.resize();
+  if (cityChart) cityChart.resize();
+  if (countryCountChart) countryCountChart.resize();
+});
+</script>
+</body>
+</html>

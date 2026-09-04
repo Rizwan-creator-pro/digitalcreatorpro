@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Settings | Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+
+<button class="hamburger-btn" id="hamburgerBtn" type="button"><i class="fa-solid fa-bars"></i></button>
+<div class="admin-overlay" id="adminOverlay"></div>
+
+<div class="admin-shell">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <div class="admin-brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+      <div class="admin-brand-text">APEX Store<span>Admin Center</span></div>
+    </div>
+
+    <div class="admin-nav-top">
+      <div class="admin-nav-section-label">Navigation</div>
+      <a class="admin-nav-link" href="dashboard.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a class="admin-nav-link" href="product-form.html"><i class="fa-solid fa-boxes-stacked"></i> <span>Products</span></a>
+      <a class="admin-nav-link" href="guide-form.html"><i class="fa-solid fa-book-open"></i> <span>Guides</span></a>
+      <a class="admin-nav-link active" id="settingsNavLink" href="settings.html"><i class="fa-solid fa-sliders"></i> <span>Site Settings</span></a>
+      <a class="admin-nav-link" href="analytics.html"><i class="fa-solid fa-chart-line"></i> <span>Analytics</span></a>
+    </div>
+
+    <div class="admin-nav-bottom">
+      <div class="admin-nav-section-label">System</div>
+      <a class="admin-nav-link" id="auditNavLink" href="audit.html"><i class="fa-solid fa-shield-halved"></i> <span>Audit Log</span></a>
+      <a class="admin-nav-link" id="seedNavLink" href="seed.html"><i class="fa-solid fa-cloud-arrow-up"></i> <span>Seed Data</span></a>
+      <a class="admin-nav-link" href="../index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>View Store</span></a>
+      <button class="admin-nav-link theme-toggle" type="button" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i> <span>Appearance</span></button>
+      <button class="admin-nav-link" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket"></i> <span>Log Out</span></button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="fluent-ambient-backdrop"></div>
+    <div class="admin-head"><div class="admin-title">Site Settings</div></div>
+    <div class="form-msg" id="formMsg"></div>
+
+    <form id="settingsForm">
+      <div class="admin-form-card">
+        <h3>Identity</h3>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Owner / Developer Name <span class="help-icon">?<span class="help-text">Your name as shown in the footer everywhere ("M. Rizwan", the copyright line, etc).</span></span></label>
+            <input class="f-input" id="ownerName" placeholder="M. Rizwan">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Site Name <span class="help-icon">?<span class="help-text">Shown in the browser tab title and used generally, e.g. "Digital Creator"</span></span></label>
+            <input class="f-input" id="siteName" placeholder="Digital Creator">
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Top-Bar Mark <span class="help-icon">?<span class="help-text">The small text next to the dot in the top-left of every page, e.g. "digitalcreator.tech"</span></span></label>
+            <input class="f-input" id="siteMark" placeholder="digitalcreator.tech">
+          </div>
+        </div>
+        <div class="f-group">
+          <label class="f-label">CV / Resume Link <span class="help-icon">?<span class="help-text">Where the "Download CV" buttons point — a hosted PDF URL, or a local file like cv.pdf</span></span></label>
+          <input class="f-input" id="cvUrl" placeholder="cv.pdf or https://…">
+        </div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Footer &amp; Navigation</h3>
+        <div class="f-group">
+          <label class="f-label">Footer Tagline <span class="help-icon">?<span class="help-text">The description line under your name in the footer.</span></span></label>
+          <textarea class="f-input f-textarea" id="footerTagline" placeholder="Oracle APEX developer — building production utilities for classic report reporting, exports, and formatting."></textarea>
+        </div>
+        <div class="f-group" style="margin-top:1rem">
+          <label class="f-label">Extra Nav Links <button type="button" class="repeat-add" onclick="addNavLink()" style="margin-left:0.6rem"><i class="fa-solid fa-plus"></i> Add Link</button> <span class="help-icon">?<span class="help-text">Appears in the top nav (and mobile menu) on every page, next to Products/Contact/Guide. Add as many as you want, or none.</span></span></label>
+          <div id="navLinksList"></div>
+        </div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Contact Details</h3>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Email</label>
+            <input class="f-input" id="email" type="email" placeholder="you@example.com">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Phone (display format)</label>
+            <input class="f-input" id="phoneDisplay" placeholder="+92 329 073 4849">
+          </div>
+        </div>
+        <div class="f-row">
+          <div class="f-group">
+            <label class="f-label">Phone (digits only, for tel: links) <span class="help-icon">?<span class="help-text">Country code + number, no spaces or symbols, e.g. 923290734849</span></span></label>
+            <input class="f-input" id="phoneDigits" placeholder="923290734849">
+          </div>
+          <div class="f-group">
+            <label class="f-label">WhatsApp Number (digits only)</label>
+            <input class="f-input" id="whatsappDigits" placeholder="923290734849">
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Visitor Location <span class="help-icon">?<span class="help-text">Controls how precisely visits are located on the Analytics map.</span></span></h3>
+        <div class="toggle-row">
+          <label class="toggle-switch"><input type="checkbox" id="exactGeoEnabled"><span class="toggle-slider"></span></label>
+          <span style="font-size:0.85rem">Ask visitors for their exact location (browser GPS permission prompt)</span>
+        </div>
+        <div class="f-hint" style="margin-top:0.6rem">
+          <b>Off (default):</b> every visit is located from its IP address only — no prompt, no permission needed. This gives the nearest city, not an exact point.<br>
+          <b>On:</b> the browser also asks the visitor to share their precise location. If they allow it, that visit uses GPS-accurate coordinates instead. If they deny it, ignore it, or their browser doesn't support it, the visit still gets logged — it just falls back to the IP-based nearest location automatically. Nothing is ever skipped either way.
+        </div>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>Social Links <button type="button" class="repeat-add" onclick="addSocial()"><i class="fa-solid fa-plus"></i> Add Social Link</button></h3>
+        <div class="f-hint" style="margin-bottom:1rem">Add as many as you want — LinkedIn, GitHub, X, YouTube, anything. Each one appears automatically in every page's nav and footer.</div>
+        <div id="socialList"></div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="saveBtn"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="../firebase-config.js"></script>
+<script src="../auth-guard.js"></script>
+<script src="../data-service.js"></script>
+<script src="admin-shell.js"></script>
+<script src="../theme.js"></script>
+<script>
+const SOCIAL_ICON_OPTIONS = [
+  { value: 'fa-brands fa-linkedin-in', label: 'LinkedIn' },
+  { value: 'fa-brands fa-github', label: 'GitHub' },
+  { value: 'fa-brands fa-x-twitter', label: 'X / Twitter' },
+  { value: 'fa-brands fa-youtube', label: 'YouTube' },
+  { value: 'fa-brands fa-instagram', label: 'Instagram' },
+  { value: 'fa-brands fa-facebook-f', label: 'Facebook' },
+  { value: 'fa-brands fa-dribbble', label: 'Dribbble' },
+  { value: 'fa-brands fa-behance', label: 'Behance' },
+  { value: 'fa-brands fa-medium', label: 'Medium' },
+  { value: 'fa-brands fa-stack-overflow', label: 'Stack Overflow' },
+  { value: 'fa-solid fa-globe', label: 'Website / Other' }
+];
+
+requireFullAdmin(function(){
+  fetchSiteSettings().then(function(s){
+    s = s || {};
+    document.getElementById('siteName').value = s.siteName || '';
+    document.getElementById('ownerName').value = s.ownerName || '';
+    document.getElementById('siteMark').value = s.siteMark || '';
+    document.getElementById('cvUrl').value = s.cvUrl || '';
+    document.getElementById('footerTagline').value = s.footerTagline || '';
+    document.getElementById('email').value = s.email || '';
+    document.getElementById('phoneDisplay').value = s.phoneDisplay || '';
+    document.getElementById('phoneDigits').value = s.phoneDigits || '';
+    document.getElementById('whatsappDigits').value = s.whatsappDigits || '';
+    document.getElementById('exactGeoEnabled').checked = !!s.exactGeoEnabled;
+    (s.socialLinks || []).forEach(addSocial);
+    if (!(s.socialLinks || []).length) addSocial();
+    (s.navLinks || []).forEach(addNavLink);
+  });
+});
+
+function addNavLink(link){
+  link = link || { label: '', url: '' };
+  const wrap = document.getElementById('navLinksList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-row">' +
+      '<div class="f-group"><label class="f-label">Label</label><input class="f-input nav-label" value="' + esc(link.label) + '" placeholder="Blog"></div>' +
+      '<div class="f-group"><label class="f-label">URL</label><input class="f-input nav-url" value="' + esc(link.url) + '" placeholder="https://… or index.html#section"></div>' +
+    '</div>';
+  wrap.appendChild(row);
+}
+
+function addSocial(social){
+  social = social || { icon: SOCIAL_ICON_OPTIONS[0].value, label: '', url: '' };
+  const wrap = document.getElementById('socialList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-row-3">' +
+      '<div class="f-group"><label class="f-label">Platform</label><select class="f-input soc-icon">' +
+        SOCIAL_ICON_OPTIONS.map(function(o){ return '<option value="' + o.value + '"' + (o.value === social.icon ? ' selected' : '') + '>' + o.label + '</option>'; }).join('') +
+      '</select></div>' +
+      '<div class="f-group"><label class="f-label">Label</label><input class="f-input soc-label" value="' + esc(social.label) + '" placeholder="LinkedIn"></div>' +
+      '<div class="f-group"><label class="f-label">URL</label><input class="f-input soc-url" value="' + esc(social.url) + '" placeholder="https://…"></div>' +
+    '</div>';
+  wrap.appendChild(row);
+}
+
+document.getElementById('settingsForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const socialLinks = Array.from(document.querySelectorAll('#socialList .repeat-item')).map(function(row){
+    return {
+      icon: row.querySelector('.soc-icon').value,
+      label: row.querySelector('.soc-label').value,
+      url: row.querySelector('.soc-url').value
+    };
+  }).filter(function(s){ return s.url; });
+
+  const navLinks = Array.from(document.querySelectorAll('#navLinksList .repeat-item')).map(function(row){
+    return {
+      label: row.querySelector('.nav-label').value,
+      url: row.querySelector('.nav-url').value
+    };
+  }).filter(function(n){ return n.label && n.url; });
+
+  const data = {
+    siteName: document.getElementById('siteName').value.trim(),
+    ownerName: document.getElementById('ownerName').value.trim(),
+    siteMark: document.getElementById('siteMark').value.trim(),
+    cvUrl: document.getElementById('cvUrl').value.trim(),
+    footerTagline: document.getElementById('footerTagline').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    phoneDisplay: document.getElementById('phoneDisplay').value.trim(),
+    phoneDigits: document.getElementById('phoneDigits').value.trim(),
+    whatsappDigits: document.getElementById('whatsappDigits').value.trim(),
+    exactGeoEnabled: document.getElementById('exactGeoEnabled').checked,
+    socialLinks: socialLinks,
+    navLinks: navLinks
+  };
+
+  saveSiteSettings(data).then(function(){
+    Swal.fire({ icon: 'success', title: 'Settings saved', text: 'Live on the site immediately — no rebuild needed.', timer: 1800, showConfirmButton: false });
+  }).catch(function(err){
+    Swal.fire({ icon: 'error', title: 'Could not save', text: (err.code ? '[' + err.code + '] ' : '') + err.message });
+  });
+});
+
+function esc(v){ return (v || '').toString().replace(/"/g, '&quot;'); }
+</script>
+</body>
+</html>

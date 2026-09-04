@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add / Edit Guide | Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="../style.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<button class="hamburger-btn" id="hamburgerBtn" type="button"><i class="fa-solid fa-bars"></i></button>
+<div class="admin-overlay" id="adminOverlay"></div>
+
+<div class="admin-shell">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <div class="admin-brand-icon"><i class="fa-solid fa-layer-group"></i></div>
+      <div class="admin-brand-text">APEX Store<span>Admin Center</span></div>
+    </div>
+
+    <div class="admin-nav-top">
+      <div class="admin-nav-section-label">Navigation</div>
+      <a class="admin-nav-link" href="dashboard.html"><i class="fa-solid fa-house"></i> <span>Dashboard</span></a>
+      <a class="admin-nav-link" href="product-form.html"><i class="fa-solid fa-boxes-stacked"></i> <span>Products</span></a>
+      <a class="admin-nav-link active" href="guide-form.html"><i class="fa-solid fa-book-open"></i> <span>Guides</span></a>
+      <a class="admin-nav-link" id="settingsNavLink" href="settings.html"><i class="fa-solid fa-sliders"></i> <span>Site Settings</span></a>
+      <a class="admin-nav-link" href="analytics.html"><i class="fa-solid fa-chart-line"></i> <span>Analytics</span></a>
+    </div>
+
+    <div class="admin-nav-bottom">
+      <div class="admin-nav-section-label">System</div>
+      <a class="admin-nav-link" id="auditNavLink" href="audit.html"><i class="fa-solid fa-shield-halved"></i> <span>Audit Log</span></a>
+      <a class="admin-nav-link" id="seedNavLink" href="seed.html"><i class="fa-solid fa-cloud-arrow-up"></i> <span>Seed Data</span></a>
+      <a class="admin-nav-link" href="../index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> <span>View Store</span></a>
+      <button class="admin-nav-link theme-toggle" type="button" aria-label="Toggle theme"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i> <span>Appearance</span></button>
+      <button class="admin-nav-link" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket"></i> <span>Log Out</span></button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="fluent-ambient-backdrop"></div>
+    <div class="admin-head"><div class="admin-title">Add / Edit Guide</div></div>
+    <div class="form-msg" id="formMsg"></div>
+
+    <div class="admin-form-card">
+      <h3>Product</h3>
+      <div class="f-group">
+        <label class="f-label">Choose which product's guide you're editing</label>
+        <select class="f-input" id="productSelect"><option value="">Loading…</option></select>
+      </div>
+    </div>
+
+    <div id="guideEditor" style="display:none">
+      <div class="admin-form-card">
+        <h3>Guide Sections <button type="button" class="repeat-add" onclick="addGroup()"><i class="fa-solid fa-plus"></i> Add Section</button></h3>
+        <div class="f-hint" style="margin-bottom:1rem">Each becomes one accordion block on the guide page — e.g. "Output &amp; Setup", "Column Control".</div>
+        <div id="groupsList"></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-primary" id="saveBtn" onclick="saveGuide()"><i class="fa-solid fa-floppy-disk"></i> Save Guide</button>
+        <a href="dashboard.html" class="btn-outline">Cancel</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="../firebase-config.js"></script>
+<script src="../auth-guard.js"></script>
+<script src="../data-service.js"></script>
+<script src="admin-shell.js"></script>
+<script src="../theme.js"></script>
+<script>
+let allProducts = [];
+const preselectId = new URLSearchParams(location.search).get('id');
+
+requireAdmin(function(user, adminDoc){
+  if (typeof hideFullAdminLinksIfNeeded === 'function') hideFullAdminLinksIfNeeded(adminDoc.role);
+  fetchAllProductsAdmin().then(function(products){
+    allProducts = products;
+    const sel = document.getElementById('productSelect');
+    sel.innerHTML = '<option value="">— Select a product —</option>' +
+      products.map(function(p){ return '<option value="' + p.id + '">' + (p.name || p.id) + '</option>'; }).join('');
+    if (preselectId){ sel.value = preselectId; loadGuide(preselectId); }
+    sel.addEventListener('change', function(){
+      if (sel.value) loadGuide(sel.value);
+      else document.getElementById('guideEditor').style.display = 'none';
+    });
+  });
+});
+
+function loadGuide(id){
+  const p = allProducts.find(function(x){ return x.id === id; });
+  document.getElementById('guideEditor').style.display = 'block';
+  document.getElementById('groupsList').innerHTML = '';
+  (p.guideSections || []).forEach(addGroup);
+  if (!(p.guideSections || []).length) addGroup();
+}
+
+function addGroup(group){
+  group = group || { id: '', label: '', title: '', sub: '', items: [] };
+  const wrap = document.getElementById('groupsList');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.style.background = '#fff';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-row">' +
+      '<div class="f-group"><label class="f-label">Section ID (anchor) <span class="help-icon">?<span class="help-text">Used as the URL anchor, e.g. #grp-output. Lowercase, hyphens only.</span></span></label><input class="f-input grp-id" value="' + esc(group.id) + '" placeholder="grp-output"></div>' +
+      '<div class="f-group"><label class="f-label">Label</label><input class="f-input grp-label" value="' + esc(group.label) + '" placeholder="01 — Foundation"></div>' +
+    '</div>' +
+    '<div class="f-group"><label class="f-label">Title</label><input class="f-input grp-title" value="' + esc(group.title) + '" placeholder="Output &amp; Setup"></div>' +
+    '<div class="f-group"><label class="f-label">Intro (optional, HTML allowed)</label><input class="f-input grp-sub" value="' + esc(group.sub) + '"></div>' +
+    '<div class="f-hint" style="margin:0.8rem 0 0.5rem">Items</div>' +
+    '<div class="grp-items"></div>' +
+    '<button type="button" class="repeat-add" onclick="addItem(this)"><i class="fa-solid fa-plus"></i> Add Item</button>';
+  wrap.appendChild(row);
+  (group.items || []).forEach(function(it){ addItem(row.querySelector('.repeat-add'), it); });
+}
+
+function addItem(addBtn, item){
+  item = item || { title: '', param: '', body: '' };
+  const itemsWrap = addBtn.closest('.repeat-item').querySelector('.grp-items');
+  const row = document.createElement('div');
+  row.className = 'repeat-item';
+  row.style.background = 'var(--cream)';
+  row.innerHTML =
+    '<button type="button" class="repeat-remove" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>' +
+    '<div class="f-row">' +
+      '<div class="f-group"><label class="f-label">Title (bold heading)</label><input class="f-input item-title" value="' + esc(item.title) + '"></div>' +
+      '<div class="f-group"><label class="f-label">Parameter (bold, mono)</label><input class="f-input item-param" value="' + esc(item.param) + '"></div>' +
+    '</div>' +
+    '<div class="f-group"><label class="f-label">Detail (plain text, HTML allowed for &lt;code&gt;)</label><textarea class="f-input f-textarea item-body">' + esc(item.body) + '</textarea></div>';
+  itemsWrap.appendChild(row);
+}
+
+function saveGuide(){
+  const id = document.getElementById('productSelect').value;
+  if (!id) return;
+
+  const guideSections = Array.from(document.querySelectorAll('#groupsList > .repeat-item')).map(function(g){
+    const items = Array.from(g.querySelectorAll('.grp-items > .repeat-item')).map(function(it){
+      return {
+        title: it.querySelector('.item-title').value,
+        param: it.querySelector('.item-param').value,
+        body: it.querySelector('.item-body').value
+      };
+    });
+    return {
+      id: g.querySelector('.grp-id').value.trim(),
+      label: g.querySelector('.grp-label').value,
+      title: g.querySelector('.grp-title').value,
+      sub: g.querySelector('.grp-sub').value,
+      items: items
+    };
+  });
+
+  saveGuideSections(id, guideSections).then(function(){
+    Swal.fire({ icon: 'success', title: 'Guide saved', timer: 1200, showConfirmButton: false })
+      .then(function(){ location.href = 'dashboard.html'; });
+  }).catch(function(err){
+    Swal.fire({ icon: 'error', title: 'Could not save', text: err.message });
+  });
+}
+
+function esc(v){ return (v || '').toString().replace(/"/g, '&quot;'); }
+</script>
+</body>
+</html>

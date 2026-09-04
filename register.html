@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>(function(){var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Registration | M. Rizwan</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+.auth-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--cream)}
+.auth-card{width:100%;max-width:380px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:2.4rem}
+.auth-title{font-family:var(--display);font-weight:700;font-size:1.3rem;margin-bottom:0.3rem}
+.auth-sub{font-family:var(--body);font-size:0.85rem;color:var(--ink-soft);margin-bottom:1.8rem}
+.f-group{margin-bottom:1.1rem}
+.f-label{display:block;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:0.4rem}
+.f-input{width:100%;padding:0.75rem 0.9rem;border:1px solid var(--line);border-radius:10px;font-family:var(--body);font-size:0.9rem;background:var(--cream);color:var(--ink)}
+.f-input:focus{outline:none;border-color:var(--ink-soft)}
+.auth-error{background:#fdeaea;border:1px solid #e5b8b8;color:#9c2b2b;font-size:0.82rem;padding:0.7rem 0.9rem;border-radius:8px;margin-bottom:1rem;display:none}
+.auth-error.show{display:block}
+.auth-ok{background:#e9f9f0;border:1px solid #a9e3c4;color:#136b3e;font-size:0.82rem;padding:0.7rem 0.9rem;border-radius:8px;margin-bottom:1rem;display:none}
+.auth-ok.show{display:block}
+.auth-submit{width:100%;justify-content:center;margin-top:0.4rem}
+.auth-foot{text-align:center;margin-top:1.4rem;font-size:0.82rem;color:var(--ink-soft)}
+.auth-foot a{color:var(--ink);font-weight:600;text-decoration:none}
+html[data-theme="dark"] .auth-error{background:rgba(224,54,54,0.16);border-color:rgba(224,54,54,0.35);color:#ff8080}
+html[data-theme="dark"] .auth-ok{background:rgba(29,191,115,0.14);border-color:rgba(29,191,115,0.3);color:#4ade9a}
+html[data-theme="dark"] .f-input{background:var(--cream);color:var(--ink);border-color:var(--line)}
+</style>
+</head>
+<body>
+<button class="theme-toggle" type="button" aria-label="Toggle dark mode" style="position:fixed;top:1.2rem;right:1.2rem;background:var(--paper);border:1px solid var(--line);border-radius:50%"><i class="fa-solid fa-moon"></i><i class="fa-solid fa-sun"></i></button>
+<div class="auth-shell" style="position:relative;overflow:hidden">
+  <div class="fluent-ambient-backdrop"></div>
+  <div class="auth-card" style="position:relative;z-index:1;box-shadow:var(--card-shadow);border-radius:14px">
+    <div class="auth-title">Admin Registration</div>
+    <div class="auth-sub">Create an account. New accounts need approval from an existing admin before they can sign in — unless this is the bootstrap email set in <code>firebase-config.js</code>.</div>
+    <div class="auth-error" id="err"></div>
+    <div class="auth-ok" id="ok"></div>
+    <form id="regForm">
+      <div class="f-group">
+        <label class="f-label" for="email">Email</label>
+        <input class="f-input" type="email" id="email" required autocomplete="username">
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="password">Password</label>
+        <input class="f-input" type="password" id="password" required minlength="6" autocomplete="new-password">
+      </div>
+      <div class="f-group">
+        <label class="f-label" for="confirm">Confirm Password</label>
+        <input class="f-input" type="password" id="confirm" required minlength="6" autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn-primary auth-submit" id="submitBtn"><i class="fa-solid fa-user-plus"></i> <span>Create Account</span></button>
+    </form>
+    <div class="auth-foot">Already have an account? <a href="login.html">Sign in</a></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="theme.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+const form = document.getElementById('regForm');
+const errBox = document.getElementById('err');
+const okBox = document.getElementById('ok');
+const submitBtn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', function(e){
+  e.preventDefault();
+  errBox.classList.remove('show');
+  okBox.classList.remove('show');
+
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('confirm').value;
+
+  if (password !== confirm){
+    errBox.textContent = 'Passwords do not match.';
+    errBox.classList.add('show');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.querySelector('span').textContent = 'Creating account…';
+
+  const isBootstrap = email.toLowerCase() === BOOTSTRAP_ADMIN_EMAIL.toLowerCase();
+
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(function(cred){
+      // Writing this doc is what actually creates the `admins` collection —
+      // nothing needs to be set up in Firestore beforehand.
+      return db.collection('admins').doc(cred.user.uid).set({
+        email: email,
+        role: isBootstrap ? 'admin' : 'pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    })
+    .then(function(){
+      if (isBootstrap){
+        okBox.textContent = 'Account created and approved as the bootstrap admin. Redirecting…';
+        okBox.classList.add('show');
+        setTimeout(function(){ location.href = 'admin/dashboard.html'; }, 1200);
+      } else {
+        auth.signOut();
+        okBox.textContent = 'Account created. An existing admin needs to approve you from the dashboard before you can sign in.';
+        okBox.classList.add('show');
+        form.reset();
+        submitBtn.disabled = false;
+        submitBtn.querySelector('span').textContent = 'Create Account';
+      }
+    })
+    .catch(function(err){
+      errBox.textContent = err.message || 'Could not create account.';
+      errBox.classList.add('show');
+      submitBtn.disabled = false;
+      submitBtn.querySelector('span').textContent = 'Create Account';
+    });
+});
+</script>
+</body>
+</html>
