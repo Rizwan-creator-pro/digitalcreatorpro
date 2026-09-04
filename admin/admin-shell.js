@@ -6,16 +6,28 @@
   const btn = document.getElementById('hamburgerBtn');
   const sidebar = document.getElementById('adminSidebar');
   const overlay = document.getElementById('adminOverlay');
+  const closeBtn = document.getElementById('adminSidebarClose');
   if (!btn || !sidebar || !overlay) return;
 
-  function open(){ sidebar.classList.add('open'); overlay.classList.add('open'); }
-  function close(){ sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+  function open(){
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    document.body.classList.add('sidebar-open');
+  }
+  function close(){
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.classList.remove('sidebar-open');
+  }
 
   btn.addEventListener('click', function(){
     sidebar.classList.contains('open') ? close() : open();
   });
+  if (closeBtn) closeBtn.addEventListener('click', close);
   overlay.addEventListener('click', close);
-  sidebar.querySelectorAll('a, button').forEach(function(el){ el.addEventListener('click', close); });
+  sidebar.querySelectorAll('a, button:not(.theme-toggle):not(#adminSidebarClose)').forEach(function(el){
+    el.addEventListener('click', close);
+  });
 })();
 
 // Called from each page's requireAdmin(function(user, adminDoc){ ... })

@@ -14,7 +14,13 @@ const guideSidebar = document.getElementById('guideSidebar');
 
 /* ---------- build the sidebar ------------------------------------- */
 const productsList = window.PRODUCTS || [];
-guideSidebar.innerHTML = productsList.map(product => `
+const drawerHeadHtml = `
+  <div class="gnav-drawer-head">
+    <div class="gnav-drawer-title"><i class="fa-solid fa-book-open"></i> Guide Sections</div>
+    <button class="gnav-drawer-close" id="gnavCloseBtn" type="button" aria-label="Close sections"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+`;
+guideSidebar.innerHTML = drawerHeadHtml + productsList.map(product => `
   <div class="gnav-product" data-product="${product.id}">
     <div class="gnav-heading" data-product-toggle="${product.id}">
       <span style="display:flex;align-items:center;gap:0.55rem"><span class="gnav-dot"></span>${product.name}</span>
@@ -105,18 +111,25 @@ guideSidebar.addEventListener('click', (e) => {
 const toggleBtn = document.getElementById('gnavToggle');
 const shell = document.getElementById('guideShell');
 const overlay = document.getElementById('gnavOverlay');
+const closeBtn = document.getElementById('gnavCloseBtn');
 
+function openDrawer(){
+  shell.classList.add('open');
+  overlay.classList.add('open');
+  document.body.classList.add('gnav-open');
+}
 function closeDrawer(){
   shell.classList.remove('open');
-  shell.classList.add('collapsed');
   overlay.classList.remove('open');
+  document.body.classList.remove('gnav-open');
 }
-toggleBtn.addEventListener('click', () => {
-  shell.classList.toggle('collapsed');
-  shell.classList.toggle('open');
-  overlay.classList.toggle('open');
-});
-overlay.addEventListener('click', closeDrawer);
+if (toggleBtn) {
+  toggleBtn.addEventListener('click', () => {
+    shell.classList.contains('open') ? closeDrawer() : openDrawer();
+  });
+}
+if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+if (overlay) overlay.addEventListener('click', closeDrawer);
 
 document.getElementById('yr').textContent = new Date().getFullYear();
 window.addEventListener('load', () => {
