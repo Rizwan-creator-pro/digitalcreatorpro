@@ -213,8 +213,9 @@ function renderComparisonTable(product) {
 
 /* ---------- product card (index.html) ------------------------------ */
 function renderProductCard(product) {
+  const cleanLede = (product.lede || '').replace(/<[^>]+>/g, '');
   const searchBlob = [
-    product.name, product.lede, product.eyebrow,
+    product.name, cleanLede, product.eyebrow,
     (product.techStack || []).join(' '),
     (product.guideSections || []).map(g => g.title).join(' ')
   ].join(' ').toLowerCase();

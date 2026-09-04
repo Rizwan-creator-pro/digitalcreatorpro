@@ -16,7 +16,7 @@
 /* ============ PAGE-SPECIFIC: contact ============ */
 .contact-hero{padding:8rem 2.5rem 2rem;text-align:center;position:relative;overflow:hidden}
 .contact-hero .eyebrow{justify-content:center}
-.contact-hero-title{font-family:var(--headline);font-weight:400;font-size:clamp(2.4rem,5.5vw,4rem);line-height:0.98;letter-spacing:-0.015em;text-transform:uppercase;max-width:800px;margin:0 auto}
+.contact-hero-title{font-family:var(--headline);font-weight:400;font-size:clamp(2rem,5.5vw,4rem);line-height:0.98;letter-spacing:-0.015em;text-transform:uppercase;max-width:800px;margin:0 auto;overflow-wrap:break-word;word-break:normal}
 .contact-hero-title em{font-style:normal;color:var(--accent-deep)}
 .contact-hero-lede{font-family:var(--body);font-size:1.02rem;color:var(--ink-soft);max-width:50ch;margin:1.2rem auto 0;line-height:1.65}
 
@@ -70,6 +70,7 @@
 @media(max-width:640px){
   section{padding:3rem 1.25rem}
   .contact-hero{padding:7rem 1.25rem 1.5rem}
+  .contact-hero-title{font-size:clamp(1.55rem,7.2vw,2.25rem);line-height:1.02;overflow-wrap:break-word}
   #contactSection{padding:0 1.25rem}
   .contact-form-card{padding:1.8rem}
   .form-grid{grid-template-columns:1fr}

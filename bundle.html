@@ -16,16 +16,18 @@
 /* ============ PAGE-SPECIFIC: bundle / product detail ============ */
 .hero{padding:7.5rem 2.5rem 2rem}
 .hero-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.1fr 0.9fr;gap:3.5rem;align-items:center}
-.hero-title{font-family:var(--headline);font-weight:400;font-size:clamp(2.6rem,5.4vw,4.4rem);line-height:0.98;letter-spacing:-0.015em;text-transform:uppercase}
+.hero-title{font-family:var(--headline);font-weight:400;font-size:clamp(2rem,5.2vw,4.4rem);line-height:0.98;letter-spacing:-0.015em;text-transform:uppercase;overflow-wrap:break-word;word-break:normal}
 .hero-title em{font-style:normal;color:var(--accent-deep)}
+.hero-title .accent-text{font-style:normal;color:var(--accent-deep)}
 .hero-lede{font-family:var(--body);font-size:1.05rem;color:var(--ink-soft);max-width:46ch;margin-top:1.35rem;line-height:1.65}
+.hero-lede b,.hero-lede strong{font-weight:600;color:var(--ink)}
 .hero-cta{display:flex;flex-wrap:wrap;gap:0.85rem;margin-top:2rem}
 .hero-stats{display:flex;gap:2.2rem;margin-top:2.6rem;padding-top:1.6rem;border-top:1px solid var(--line)}
 .hero-media{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--dark);aspect-ratio:4/5;box-shadow:0 30px 60px -20px rgba(18,18,18,0.35)}
 .hero-media img,.hero-media video,.hero-media iframe{width:100%;height:100%;object-fit:cover;opacity:0.92;border:0}
 .hero-media-tag{position:absolute;left:1.1rem;bottom:1.1rem;right:1.1rem;background:rgba(18,18,18,0.72);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);border-radius:var(--r-sm);padding:0.85rem 1rem;font-family:var(--mono);font-size:0.68rem;color:rgba(255,255,255,0.85);letter-spacing:0.03em}
 .hero-media-tag b{color:var(--accent);font-weight:600}
-@media(max-width:900px){.hero-grid{grid-template-columns:1fr}.hero-media{max-width:420px;margin:0 auto;order:-1}.hero-stats{flex-wrap:wrap;gap:1.6rem}}
+@media(max-width:900px){.hero-grid{grid-template-columns:minmax(0,1fr)}.hero-media{max-width:420px;margin:0 auto;order:-1}.hero-stats{flex-wrap:wrap;gap:1.6rem}}
 
 /* ---- "Watch It Run" laptop demo — lives after the code sections ---- */
 /* padding-bottom added: this section previously had padding:0 (only
@@ -118,6 +120,10 @@
 @media(max-width:640px){
   section{padding:3rem 1.25rem}
   .hero{padding:7rem 1.25rem 1.5rem}
+  .hero-grid{grid-template-columns:minmax(0,1fr)}
+  .hero-grid > div{min-width:0}
+  .hero-title{font-size:clamp(1.55rem,7.2vw,2.25rem);line-height:1.02;overflow-wrap:break-word}
+  .hero-lede{font-size:0.96rem;line-height:1.6}
   .bundle-pricing{padding:2.3rem 1.5rem}
 }
 </style>

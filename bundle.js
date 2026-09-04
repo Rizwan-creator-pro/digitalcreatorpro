@@ -62,12 +62,12 @@ function renderSingleProduct(product) {
   setAccent(product);
 
   document.getElementById('pageTitle').textContent = `${product.name} | Digital Creator`;
-  document.getElementById('pageDesc').setAttribute('content', product.lede);
+  document.getElementById('pageDesc').setAttribute('content', (product.lede || '').replace(/<[^>]+>/g, ''));
   document.getElementById('tbSuffix').textContent = `— ${product.name}`;
 
   document.getElementById('heroEyebrow').textContent = product.eyebrow;
   document.getElementById('heroTitle').innerHTML = product.titleHtml;
-  document.getElementById('heroLede').textContent = product.lede;
+  document.getElementById('heroLede').innerHTML = product.lede || '';
   document.getElementById('heroStats').innerHTML = renderStats(product.stats);
   document.getElementById('heroTag').innerHTML = product.heroTag;
   renderHeroMedia(product);
