@@ -65,6 +65,7 @@
       <input type="text" class="f-input analytics-filter-text" id="filterIp" placeholder="IP contains…">
       <div class="analytics-btn-row">
         <button class="btn-outline" id="filterApplyBtn"><i class="fa-solid fa-filter"></i> Filter</button>
+        <button class="btn-outline" id="filterTodayBtn"><i class="fa-solid fa-calendar-day"></i> Today</button>
         <button class="btn-outline" id="filterClearBtn">Clear</button>
         <span class="f-hint" id="filterSummary"></span>
       </div>
@@ -72,9 +73,11 @@
 
     <div class="admin-cards" id="statCards">
       <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Total Pageviews</div></div>
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Unique Visitors (IP)</div></div>
       <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Countries</div></div>
       <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Pages Tracked</div></div>
-      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Today</div></div>
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Today (Pageviews)</div></div>
+      <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Today (Unique IPs)</div></div>
       <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Exact GPS Location</div></div>
       <div class="admin-card"><div class="admin-card-n">—</div><div class="admin-card-l">Nearest Location (IP)</div></div>
     </div>
@@ -96,14 +99,22 @@
       </div>
     </div>
 
+    <div class="chart-section-header">
+      <div class="admin-title" style="font-size:1.15rem;margin:0">Breakdown Metrics</div>
+      <div class="chart-metric-toggle" id="chartMetricToggle">
+        <button type="button" class="chart-metric-btn active" data-metric="unique"><i class="fa-solid fa-fingerprint"></i> Unique Visitors (by IP)</button>
+        <button type="button" class="chart-metric-btn" data-metric="views"><i class="fa-solid fa-chart-simple"></i> Total Pageviews</button>
+      </div>
+    </div>
+
     <div class="admin-charts">
-      <div class="admin-chart-card"><h3>Visitors by Country</h3><div class="admin-chart" id="chartCountry"></div></div>
-      <div class="admin-chart-card"><h3>Views by Page</h3><div class="admin-chart" id="chartPages"></div></div>
-      <div class="admin-chart-card"><h3>Visitors by OS</h3><div class="admin-chart" id="chartOS"></div></div>
-      <div class="admin-chart-card"><h3>Visitors by Browser</h3><div class="admin-chart" id="chartBrowser"></div></div>
-      <div class="admin-chart-card"><h3>Visitors by Province / Region</h3><div class="admin-chart" id="chartProvince"></div></div>
-      <div class="admin-chart-card"><h3>Visitors by City</h3><div class="admin-chart" id="chartCity"></div></div>
-      <div class="admin-chart-card"><h3>Visitors by Country (Count)</h3><div class="admin-chart" id="chartCountryCount"></div></div>
+      <div class="admin-chart-card"><h3 id="headChartCountry">Unique Visitors by Country</h3><div class="admin-chart" id="chartCountry"></div></div>
+      <div class="admin-chart-card"><h3 id="headChartPages">Unique Visitors by Page</h3><div class="admin-chart" id="chartPages"></div></div>
+      <div class="admin-chart-card"><h3 id="headChartOS">Unique Visitors by OS</h3><div class="admin-chart" id="chartOS"></div></div>
+      <div class="admin-chart-card"><h3 id="headChartBrowser">Unique Visitors by Browser</h3><div class="admin-chart" id="chartBrowser"></div></div>
+      <div class="admin-chart-card"><h3 id="headChartProvince">Unique Visitors by Province / Region</h3><div class="admin-chart" id="chartProvince"></div></div>
+      <div class="admin-chart-card"><h3 id="headChartCity">Unique Visitors by City</h3><div class="admin-chart" id="chartCity"></div></div>
+      <div class="admin-chart-card"><h3 id="headChartCountryCount">Top Countries (Unique Visitors)</h3><div class="admin-chart" id="chartCountryCount"></div></div>
     </div>
 
     <div class="admin-head" style="margin-top:0.6rem;margin-bottom:1rem">
@@ -132,41 +143,117 @@
 let _allViews = [];
 let map, markersLayer;
 let timeChart, countryChart, pageChart, osChart, browserChart, provinceChart, cityChart, countryCountChart;
+let _currentMetric = 'unique';
+let _lastViews = [], _lastAgg = null;
+
+function getSysdate(){
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getItemDateStr(v){
+  if (!v || !v.at) return null;
+  const d = v.at.toDate ? v.at.toDate() : new Date(v.at);
+  if (isNaN(d.getTime())) return null;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function initDateFilters(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const sysdate = getSysdate();
+  const urlFrom = urlParams.get('from');
+  const urlTo = urlParams.get('to');
+  const isAll = urlParams.get('all') === '1' || urlFrom === 'all';
+
+  if (!isAll) {
+    document.getElementById('filterFrom').value = urlFrom !== null ? urlFrom : sysdate;
+    document.getElementById('filterTo').value = urlTo !== null ? urlTo : sysdate;
+  }
+  if (urlParams.get('location')) {
+    document.getElementById('filterLocation').value = urlParams.get('location');
+  }
+  if (urlParams.get('ip')) {
+    document.getElementById('filterIp').value = urlParams.get('ip');
+  }
+}
 
 requireAdmin(function(user, adminDoc){
   if (typeof hideFullAdminLinksIfNeeded === 'function') hideFullAdminLinksIfNeeded(adminDoc.role);
+  initDateFilters();
   initMap();
   fetchPageviews(2000).then(function(views){
     _allViews = views;
-    renderAll(views);
+    applyFilters(false);
   });
 });
 
-document.getElementById('filterApplyBtn').addEventListener('click', applyFilters);
+document.getElementById('filterApplyBtn').addEventListener('click', function(){ applyFilters(true); });
+document.getElementById('filterTodayBtn').addEventListener('click', function(){
+  const sysdate = getSysdate();
+  document.getElementById('filterFrom').value = sysdate;
+  document.getElementById('filterTo').value = sysdate;
+  applyFilters(true);
+});
 document.getElementById('filterClearBtn').addEventListener('click', function(){
   document.getElementById('filterFrom').value = '';
   document.getElementById('filterTo').value = '';
   document.getElementById('filterLocation').value = '';
   document.getElementById('filterIp').value = '';
+  const url = new URL(window.location);
+  url.searchParams.delete('from');
+  url.searchParams.delete('to');
+  url.searchParams.delete('location');
+  url.searchParams.delete('ip');
+  window.history.replaceState({}, '', url);
+  document.getElementById('filterSummary').textContent = 'Showing all ' + _allViews.length + ' pageviews';
   renderAll(_allViews);
 });
 
+['filterLocation', 'filterIp'].forEach(function(id){
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('keydown', function(e){ if (e.key === 'Enter') applyFilters(true); });
+});
+
+document.querySelectorAll('#chartMetricToggle .chart-metric-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('#chartMetricToggle .chart-metric-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    _currentMetric = btn.dataset.metric || 'unique';
+    if (_lastAgg) {
+      renderCharts(_lastViews, _lastAgg);
+    }
+  });
+});
+
 /* ---------- FILTERING ----------------------------------------------
-   One filter set now drives everything below it — stat cards, all
-   three charts, the map, and the table — instead of just the table
-   like before. Date range, a free-text location match against
-   city/region/country, and a free-text IP match (substring, so a
-   partial IP like "203.0.113." works to find a whole subnet). */
-function applyFilters(){
+   One filter set drives everything below it — stat cards, all
+   charts, the map, and the table. Date range defaults to sysdate
+   (current day) unless overridden by URL parameters or cleared. */
+function applyFilters(updateUrl){
   const from = document.getElementById('filterFrom').value;
   const to = document.getElementById('filterTo').value;
   const locationQ = document.getElementById('filterLocation').value.trim().toLowerCase();
   const ipQ = document.getElementById('filterIp').value.trim().toLowerCase();
 
+  if (updateUrl !== false) {
+    const url = new URL(window.location);
+    if (from) url.searchParams.set('from', from); else url.searchParams.delete('from');
+    if (to) url.searchParams.set('to', to); else url.searchParams.delete('to');
+    if (locationQ) url.searchParams.set('location', locationQ); else url.searchParams.delete('location');
+    if (ipQ) url.searchParams.set('ip', ipQ); else url.searchParams.delete('ip');
+    window.history.replaceState({}, '', url);
+  }
+
   const filtered = _allViews.filter(function(v){
     if (from || to){
-      if (!v.at || !v.at.toDate) return false;
-      const day = v.at.toDate().toISOString().slice(0, 10);
+      const day = getItemDateStr(v);
+      if (!day) return false;
       if (from && day < from) return false;
       if (to && day > to) return false;
     }
@@ -180,14 +267,21 @@ function applyFilters(){
     return true;
   });
 
-  document.getElementById('filterSummary').textContent =
-    (from || to || locationQ || ipQ) ? ('Showing ' + filtered.length + ' of ' + _allViews.length + ' pageviews') : '';
+  const summaryEl = document.getElementById('filterSummary');
+  if (from || to || locationQ || ipQ){
+    const dateLabel = (from === to && from) ? `Sysdate ${from}` : `${from || 'start'} → ${to || 'now'}`;
+    summaryEl.textContent = `Showing ${filtered.length} of ${_allViews.length} pageviews (${dateLabel})`;
+  } else {
+    summaryEl.textContent = `Showing all ${_allViews.length} pageviews`;
+  }
 
   renderAll(filtered);
 }
 
 function renderAll(views){
+  _lastViews = views;
   const agg = computeAggregates(views);
+  _lastAgg = agg;
   renderStatCards(views, agg);
   updateMapMarkers(views);
   renderCharts(views, agg);
@@ -195,55 +289,90 @@ function renderAll(views){
 }
 
 /* ---------- shared aggregation --------------------------------------
-   Stat cards and the three charts all need the same grouped counts —
-   computed once per render instead of each one looping the (possibly
-   large) views array separately. */
+   Stat cards and all charts need the same grouped counts.
+   Computes both Total Pageviews and Unique Visitors (by distinct IP)
+   across Country, Province/Region, City, Browser, OS, Page, and Time. */
 function computeAggregates(views){
   const byPage = {}, byCountry = {}, byDay = {}, byDayVisitors = {};
   const byOS = {}, byBrowser = {}, byRegion = {}, byCity = {};
-  const today = new Date().toISOString().slice(0, 10);
+
+  const uniqueIps = new Set();
+  const todayUniqueIps = new Set();
+  const uByCountry = {}, uByRegion = {}, uByCity = {};
+  const uByOS = {}, uByBrowser = {}, uByPage = {};
+
+  const today = getSysdate();
   let todayCount = 0, preciseCount = 0;
 
   views.forEach(function(v){
+    const ip = (v.ip || '').trim() || ('anon-' + (v.id || Math.random()));
+    uniqueIps.add(ip);
+
     const page = v.path || 'unknown';
     byPage[page] = (byPage[page] || 0) + 1;
+    if (!uByPage[page]) uByPage[page] = new Set();
+    uByPage[page].add(ip);
 
     const country = v.country || 'Unknown';
     byCountry[country] = (byCountry[country] || 0) + 1;
+    if (!uByCountry[country]) uByCountry[country] = new Set();
+    uByCountry[country].add(ip);
 
     const os = v.os || 'Unknown';
     byOS[os] = (byOS[os] || 0) + 1;
+    if (!uByOS[os]) uByOS[os] = new Set();
+    uByOS[os].add(ip);
 
     const browser = v.browser || 'Unknown';
     byBrowser[browser] = (byBrowser[browser] || 0) + 1;
+    if (!uByBrowser[browser]) uByBrowser[browser] = new Set();
+    uByBrowser[browser].add(ip);
 
-    // region/city are whatever the geo provider returned — genuinely
-    // absent for visits where every provider in the fallback chain
-    // failed, so those land under one shared "Unknown" bucket rather
-    // than being silently dropped from the chart.
     const region = v.region || 'Unknown';
     byRegion[region] = (byRegion[region] || 0) + 1;
+    if (!uByRegion[region]) uByRegion[region] = new Set();
+    uByRegion[region].add(ip);
 
     const city = v.city || 'Unknown';
     byCity[city] = (byCity[city] || 0) + 1;
+    if (!uByCity[city]) uByCity[city] = new Set();
+    uByCity[city].add(ip);
 
-    const day = v.at && v.at.toDate ? v.at.toDate().toISOString().slice(0, 10) : 'unknown';
+    const day = getItemDateStr(v) || 'unknown';
     byDay[day] = (byDay[day] || 0) + 1;
     if (day !== 'unknown'){
       if (!byDayVisitors[day]) byDayVisitors[day] = new Set();
-      // IP is the closest thing we have to a device fingerprint — this
-      // site doesn't collect a real browser fingerprint, so repeat visits
-      // from the same IP count as one visitor for that day.
-      byDayVisitors[day].add(v.ip || ('anon-' + Math.random()));
+      byDayVisitors[day].add(ip);
     }
-    if (day === today) todayCount++;
+    if (day === today){
+      todayCount++;
+      todayUniqueIps.add(ip);
+    }
     if (v.locationSource === 'precise') preciseCount++;
   });
+
+  const uniqueCounts = {
+    byCountry: {},
+    byRegion: {},
+    byCity: {},
+    byBrowser: {},
+    byOS: {},
+    byPage: {}
+  };
+  Object.keys(uByCountry).forEach(function(k){ uniqueCounts.byCountry[k] = uByCountry[k].size; });
+  Object.keys(uByRegion).forEach(function(k){ uniqueCounts.byRegion[k] = uByRegion[k].size; });
+  Object.keys(uByCity).forEach(function(k){ uniqueCounts.byCity[k] = uByCity[k].size; });
+  Object.keys(uByBrowser).forEach(function(k){ uniqueCounts.byBrowser[k] = uByBrowser[k].size; });
+  Object.keys(uByOS).forEach(function(k){ uniqueCounts.byOS[k] = uByOS[k].size; });
+  Object.keys(uByPage).forEach(function(k){ uniqueCounts.byPage[k] = uByPage[k].size; });
 
   return {
     byPage: byPage, byCountry: byCountry, byDay: byDay, byDayVisitors: byDayVisitors,
     byOS: byOS, byBrowser: byBrowser, byRegion: byRegion, byCity: byCity,
-    todayCount: todayCount, preciseCount: preciseCount
+    todayCount: todayCount, preciseCount: preciseCount,
+    totalUniqueIps: uniqueIps.size,
+    todayUniqueCount: todayUniqueIps.size,
+    unique: uniqueCounts
   };
 }
 
@@ -251,13 +380,17 @@ function computeAggregates(views){
 function renderStatCards(views, agg){
   const nums = [
     views.length,
+    agg.totalUniqueIps,
     Object.keys(agg.byCountry).length,
     Object.keys(agg.byPage).length,
     agg.todayCount,
+    agg.todayUniqueCount,
     agg.preciseCount,
     views.length - agg.preciseCount
   ];
-  document.querySelectorAll('#statCards .admin-card-n').forEach(function(el, i){ el.textContent = nums[i]; });
+  document.querySelectorAll('#statCards .admin-card-n').forEach(function(el, i){
+    el.textContent = nums[i] !== undefined ? nums[i] : '—';
+  });
 }
 
 /* ---------- report table ------------------------------------------- */
@@ -394,13 +527,32 @@ function renderCharts(views, agg){
     ]
   }, true);
 
+  const isUnique = _currentMetric === 'unique';
+  const dataSrc = isUnique ? (agg.unique || {}) : agg;
+  const unit = isUnique ? 'unique visitors' : 'pageviews';
+
+  const hMap = {
+    headChartCountry: isUnique ? 'Unique Visitors by Country' : 'Views by Country',
+    headChartPages: isUnique ? 'Unique Visitors by Page' : 'Views by Page',
+    headChartOS: isUnique ? 'Unique Visitors by OS' : 'Views by OS',
+    headChartBrowser: isUnique ? 'Unique Visitors by Browser' : 'Views by Browser',
+    headChartProvince: isUnique ? 'Unique Visitors by Province / Region' : 'Views by Province / Region',
+    headChartCity: isUnique ? 'Unique Visitors by City' : 'Views by City',
+    headChartCountryCount: isUnique ? 'Top Countries (Unique Visitors)' : 'Top Countries (Pageviews)'
+  };
+  Object.keys(hMap).forEach(function(id){
+    const el = document.getElementById(id);
+    if (el) el.textContent = hMap[id];
+  });
+
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const donutBorderColor = isDark ? '#1A1A1A' : '#fff';
+  const barColorPages = isDark ? '#E5E7EB' : '#121212';
 
-  const countryEntries = Object.entries(agg.byCountry).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 8);
+  const countryEntries = Object.entries(dataSrc.byCountry || {}).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 8);
   if (!countryChart) countryChart = echarts.init(document.getElementById('chartCountry'));
   countryChart.setOption({
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ' + unit + ' ({d}%)' },
     legend: { bottom: 0, textStyle: { fontFamily: 'Inter', fontSize: 10 } },
     series: [{
       type: 'pie', radius: ['40%', '68%'], avoidLabelOverlap: false,
@@ -412,20 +564,20 @@ function renderCharts(views, agg){
     }]
   }, true);
 
-  const pageEntries = Object.entries(agg.byPage).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
+  const pageEntries = Object.entries(dataSrc.byPage || {}).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
   if (!pageChart) pageChart = echarts.init(document.getElementById('chartPages'));
   pageChart.setOption({
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', formatter: function(params){ const p = params[0]; return (p.name || '') + ': ' + (p.value || 0) + ' ' + unit; } },
     grid: { left: 90, right: 20, top: 10, bottom: 20 },
     xAxis: { type: 'value' },
     yAxis: { type: 'category', data: pageEntries.map(function(e){ return e[0]; }).reverse(), axisLabel: { fontSize: 10 } },
-    series: [{ type: 'bar', data: pageEntries.map(function(e){ return e[1]; }).reverse(), itemStyle: { color: '#121212', borderRadius: [0, 4, 4, 0] }, barWidth: '55%' }]
+    series: [{ type: 'bar', data: pageEntries.map(function(e){ return e[1]; }).reverse(), itemStyle: { color: barColorPages, borderRadius: [0, 4, 4, 0] }, barWidth: '55%' }]
   }, true);
 
-  const osEntries = Object.entries(agg.byOS).sort(function(a, b){ return b[1] - a[1]; });
+  const osEntries = Object.entries(dataSrc.byOS || {}).sort(function(a, b){ return b[1] - a[1]; });
   if (!osChart) osChart = echarts.init(document.getElementById('chartOS'));
   osChart.setOption({
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ' + unit + ' ({d}%)' },
     legend: { bottom: 0, textStyle: { fontFamily: 'Inter', fontSize: 10 } },
     series: [{
       type: 'pie', radius: ['40%', '68%'], avoidLabelOverlap: false,
@@ -437,10 +589,10 @@ function renderCharts(views, agg){
     }]
   }, true);
 
-  const browserEntries = Object.entries(agg.byBrowser).sort(function(a, b){ return b[1] - a[1]; });
+  const browserEntries = Object.entries(dataSrc.byBrowser || {}).sort(function(a, b){ return b[1] - a[1]; });
   if (!browserChart) browserChart = echarts.init(document.getElementById('chartBrowser'));
   browserChart.setOption({
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ' + unit + ' ({d}%)' },
     legend: { bottom: 0, textStyle: { fontFamily: 'Inter', fontSize: 10 } },
     series: [{
       type: 'pie', radius: ['40%', '68%'], avoidLabelOverlap: false,
@@ -456,33 +608,32 @@ function renderCharts(views, agg){
   // browser (dozens of distinct cities is normal, dozens of OSes is not),
   // so these use the same top-N horizontal bar pattern as Views by Page
   // rather than a donut, which gets unreadable past a handful of slices.
-  const provinceEntries = Object.entries(agg.byRegion).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
+  const provinceEntries = Object.entries(dataSrc.byRegion || {}).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
   if (!provinceChart) provinceChart = echarts.init(document.getElementById('chartProvince'));
   provinceChart.setOption({
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', formatter: function(params){ const p = params[0]; return (p.name || '') + ': ' + (p.value || 0) + ' ' + unit; } },
     grid: { left: 90, right: 20, top: 10, bottom: 20 },
     xAxis: { type: 'value' },
     yAxis: { type: 'category', data: provinceEntries.map(function(e){ return e[0]; }).reverse(), axisLabel: { fontSize: 10 } },
     series: [{ type: 'bar', data: provinceEntries.map(function(e){ return e[1]; }).reverse(), itemStyle: { color: '#3B82F6', borderRadius: [0, 4, 4, 0] }, barWidth: '55%' }]
   }, true);
 
-  const cityEntries = Object.entries(agg.byCity).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
+  const cityEntries = Object.entries(dataSrc.byCity || {}).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
   if (!cityChart) cityChart = echarts.init(document.getElementById('chartCity'));
   cityChart.setOption({
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', formatter: function(params){ const p = params[0]; return (p.name || '') + ': ' + (p.value || 0) + ' ' + unit; } },
     grid: { left: 90, right: 20, top: 10, bottom: 20 },
     xAxis: { type: 'value' },
     yAxis: { type: 'category', data: cityEntries.map(function(e){ return e[0]; }).reverse(), axisLabel: { fontSize: 10 } },
     series: [{ type: 'bar', data: cityEntries.map(function(e){ return e[1]; }).reverse(), itemStyle: { color: '#F59E0B', borderRadius: [0, 4, 4, 0] }, barWidth: '55%' }]
   }, true);
 
-  // Same data as the Country donut above (agg.byCountry, no new
-  // aggregation needed) — a bar shows exact counts per country at a
-  // glance, which a donut's hover-only tooltip doesn't.
-  const countryCountEntries = Object.entries(agg.byCountry).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
+  // Same metric-governed data as the Country donut above — a bar shows
+  // exact counts per country at a glance.
+  const countryCountEntries = Object.entries(dataSrc.byCountry || {}).sort(function(a, b){ return b[1] - a[1]; }).slice(0, 10);
   if (!countryCountChart) countryCountChart = echarts.init(document.getElementById('chartCountryCount'));
   countryCountChart.setOption({
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', formatter: function(params){ const p = params[0]; return (p.name || '') + ': ' + (p.value || 0) + ' ' + unit; } },
     grid: { left: 90, right: 20, top: 10, bottom: 20 },
     xAxis: { type: 'value' },
     yAxis: { type: 'category', data: countryCountEntries.map(function(e){ return e[0]; }).reverse(), axisLabel: { fontSize: 10 } },

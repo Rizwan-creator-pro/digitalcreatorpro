@@ -44,7 +44,28 @@
     <div class="fluent-ambient-backdrop"></div>
     <div class="admin-head">
       <div class="admin-title">Audit Log</div>
-      <div class="f-hint">Last 200 actions — who created, updated, or deleted what, and when.</div>
+      <div class="f-hint">System action history with date and keyword filters.</div>
+    </div>
+
+    <div class="analytics-filters">
+      <div class="analytics-date-row">
+        <div class="analytics-date-field">
+          <label class="analytics-filter-lbl" for="filterFrom">From</label>
+          <input type="date" class="f-input" id="filterFrom" title="From date">
+        </div>
+        <span class="f-hint analytics-date-sep">to</span>
+        <div class="analytics-date-field">
+          <label class="analytics-filter-lbl" for="filterTo">To</label>
+          <input type="date" class="f-input" id="filterTo" title="To date">
+        </div>
+      </div>
+      <input type="text" class="f-input analytics-filter-text" id="filterSearch" placeholder="Search admin email, entity, action…">
+      <div class="analytics-btn-row">
+        <button class="btn-outline" id="filterApplyBtn"><i class="fa-solid fa-filter"></i> Filter</button>
+        <button class="btn-outline" id="filterTodayBtn"><i class="fa-solid fa-calendar-day"></i> Today</button>
+        <button class="btn-outline" id="filterClearBtn">Clear</button>
+        <span class="f-hint" id="filterSummary"></span>
+      </div>
     </div>
 
     <div class="admin-table-wrap">
@@ -65,6 +86,8 @@
 <script src="admin-shell.js"></script>
 <script src="../theme.js"></script>
 <script>
+let _allAuditEntries = [];
+
 const ACTION_LABEL = {
   create: 'Created', update: 'Updated', delete: 'Deleted',
   activate: 'Activated', deactivate: 'Deactivated', 'update-guide': 'Updated Guide',
@@ -78,14 +101,116 @@ const ACTION_ICON = {
   'unblock-admin': 'fa-solid fa-lock-open', 'remove-admin-record': 'fa-solid fa-user-minus'
 };
 
-requireAdmin(function(){
-  fetchAuditLog(200).then(renderAudit);
+function getSysdate(){
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getItemDateStr(item){
+  if (!item || !item.at) return null;
+  const d = item.at.toDate ? item.at.toDate() : new Date(item.at);
+  if (isNaN(d.getTime())) return null;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function initDateFilters(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const sysdate = getSysdate();
+  const urlFrom = urlParams.get('from');
+  const urlTo = urlParams.get('to');
+  const isAll = urlParams.get('all') === '1' || urlFrom === 'all';
+
+  if (!isAll) {
+    document.getElementById('filterFrom').value = urlFrom !== null ? urlFrom : sysdate;
+    document.getElementById('filterTo').value = urlTo !== null ? urlTo : sysdate;
+  }
+  if (urlParams.get('q')) {
+    document.getElementById('filterSearch').value = urlParams.get('q');
+  }
+}
+
+function applyFilters(updateUrl){
+  const from = document.getElementById('filterFrom').value;
+  const to = document.getElementById('filterTo').value;
+  const q = document.getElementById('filterSearch').value.trim().toLowerCase();
+
+  if (updateUrl !== false) {
+    const url = new URL(window.location);
+    if (from) url.searchParams.set('from', from); else url.searchParams.delete('from');
+    if (to) url.searchParams.set('to', to); else url.searchParams.delete('to');
+    if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
+    window.history.replaceState({}, '', url);
+  }
+
+  const filtered = _allAuditEntries.filter(function(e){
+    if (from || to){
+      const day = getItemDateStr(e);
+      if (!day) return false;
+      if (from && day < from) return false;
+      if (to && day > to) return false;
+    }
+    if (q){
+      const actionLabel = (ACTION_LABEL[e.action] || e.action || '').toLowerCase();
+      const matchBlob = [e.adminEmail, e.action, actionLabel, e.entity, e.entityId, (e.extra && e.extra.name)].filter(Boolean).join(' ').toLowerCase();
+      if (!matchBlob.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const summaryEl = document.getElementById('filterSummary');
+  if (from || to || q){
+    const dateLabel = (from === to && from) ? `Sysdate ${from}` : `${from || 'start'} → ${to || 'now'}`;
+    summaryEl.textContent = `Showing ${filtered.length} of ${_allAuditEntries.length} actions (${dateLabel})`;
+  } else {
+    summaryEl.textContent = `Showing all ${_allAuditEntries.length} actions`;
+  }
+
+  renderAudit(filtered);
+}
+
+document.getElementById('filterApplyBtn').addEventListener('click', function(){ applyFilters(true); });
+document.getElementById('filterTodayBtn').addEventListener('click', function(){
+  const sysdate = getSysdate();
+  document.getElementById('filterFrom').value = sysdate;
+  document.getElementById('filterTo').value = sysdate;
+  applyFilters(true);
+});
+document.getElementById('filterClearBtn').addEventListener('click', function(){
+  document.getElementById('filterFrom').value = '';
+  document.getElementById('filterTo').value = '';
+  document.getElementById('filterSearch').value = '';
+  const url = new URL(window.location);
+  url.searchParams.delete('from');
+  url.searchParams.delete('to');
+  url.searchParams.delete('q');
+  window.history.replaceState({}, '', url);
+  document.getElementById('filterSummary').textContent = 'Showing all ' + _allAuditEntries.length + ' actions';
+  renderAudit(_allAuditEntries);
+});
+
+document.getElementById('filterSearch').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') applyFilters(true);
+});
+
+requireAdmin(function(user, adminDoc){
+  if (typeof hideFullAdminLinksIfNeeded === 'function') hideFullAdminLinksIfNeeded(adminDoc.role);
+  initDateFilters();
+  fetchAuditLog(500).then(function(entries){
+    _allAuditEntries = entries;
+    applyFilters(false);
+  });
 });
 
 function renderAudit(entries){
   const body = document.getElementById('auditBody');
   if (!entries.length){
-    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-faint)">No actions recorded yet.</td></tr>';
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-faint);padding:2rem">No actions found for the selected dates.</td></tr>';
     return;
   }
   body.innerHTML = entries.map(function(e){

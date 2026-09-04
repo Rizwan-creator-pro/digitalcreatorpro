@@ -80,14 +80,26 @@
 .demo-slide-dot.active{background:#fff}
 .demo-media-zoom{position:absolute;top:0.8rem;right:0.8rem;width:34px;height:34px;border-radius:50%;background:rgba(18,18,18,0.65);backdrop-filter:blur(6px);color:#fff;display:flex;align-items:center;justify-content:center;z-index:3;opacity:0;transition:opacity 0.2s;pointer-events:none}
 #demoMedia:hover .demo-media-zoom{opacity:1}
-/* Prev/next slideshow arrows — shared by the hero box, the demo laptop
-   screen, and the fullscreen lightbox. Always visible at reduced opacity
-   (not hover-only) since hover doesn't exist on touch devices and these
-   are real controls, not decoration. */
-.demo-slide-nav{position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(18,18,18,0.55);backdrop-filter:blur(4px);color:#fff;border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:4;opacity:0.7;transition:opacity 0.2s,background 0.2s;font-size:0.78rem}
-.demo-slide-nav:hover{opacity:1;background:rgba(18,18,18,0.85)}
-.demo-slide-nav.prev{left:0.6rem}
-.demo-slide-nav.next{right:0.6rem}
+/* Prev/next slideshow arrows — hidden by default on desktop, revealed only on hover */
+.demo-slide-nav{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(18,18,18,0.65);backdrop-filter:blur(6px);color:#fff;border:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:4;opacity:0;pointer-events:none;transition:opacity 0.25s ease,background 0.2s ease,transform 0.2s ease;font-size:0.82rem;box-shadow:0 4px 12px rgba(0,0,0,0.35)}
+.demo-slide-nav.prev{left:0.75rem}
+.demo-slide-nav.next{right:0.75rem}
+
+#demoMedia:hover .demo-slide-nav,
+.hero-media:hover .demo-slide-nav{opacity:0.85;pointer-events:auto}
+
+#demoMedia .demo-slide-nav:hover,
+.hero-media .demo-slide-nav:hover{opacity:1;background:rgba(18,18,18,0.92);transform:translateY(-50%) scale(1.08)}
+
+/* Fullscreen lightbox always keeps navigation arrows visible */
+.media-lightbox .demo-slide-nav{opacity:0.85;pointer-events:auto}
+.media-lightbox .demo-slide-nav:hover{opacity:1;background:rgba(18,18,18,0.92);transform:translateY(-50%) scale(1.08)}
+
+/* On touch/mobile devices without hover, keep arrows accessible */
+@media(hover:none),(max-width:768px){
+  #demoMedia .demo-slide-nav,
+  .hero-media .demo-slide-nav{opacity:0.75;pointer-events:auto}
+}
 
 .media-lightbox{position:fixed;inset:0;background:rgba(6,6,6,0.94);z-index:400;display:none;align-items:center;justify-content:center;padding:3rem 1.5rem}
 .media-lightbox.open{display:flex}
