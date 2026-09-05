@@ -16,6 +16,8 @@
 /* ============ PAGE-SPECIFIC: guide (right-side tabs) ============ */
 .eyebrow{display:inline-flex;align-items:center;gap:0.65rem;font-family:var(--mono);font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent-deep);margin-bottom:1.1rem}
 .eyebrow::before{content:'';width:22px;height:1px;background:var(--accent-deep)}
+html[data-theme="dark"] .eyebrow{color:var(--accent, #2FE58B)}
+html[data-theme="dark"] .eyebrow::before{background:var(--accent, #2FE58B)}
 .docs-hero{padding:7.5rem 2.5rem 2.5rem;text-align:center;position:relative;overflow:visible;z-index:1}
 
 .guide-shell{display:flex;align-items:flex-start;max-width:1360px;margin:0 auto;padding:1rem 2.5rem 5rem;gap:2.6rem;position:relative;z-index:1}

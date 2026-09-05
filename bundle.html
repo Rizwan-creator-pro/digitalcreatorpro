@@ -14,11 +14,12 @@
 <link rel="stylesheet" href="style.css">
 <style>
 /* ============ PAGE-SPECIFIC: bundle / product detail ============ */
-.hero{padding:7.5rem 2.5rem 2rem}
+.hero{padding:7.5rem 2.5rem 2rem;position:relative;z-index:1}
 .hero-grid{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1.1fr 0.9fr;gap:3.5rem;align-items:center}
 .hero-title{font-family:var(--headline);font-weight:400;font-size:clamp(2rem,5.2vw,4.4rem);line-height:0.98;letter-spacing:-0.015em;text-transform:uppercase;overflow-wrap:break-word;word-break:normal}
 .hero-title em{font-style:normal;color:var(--accent-deep)}
 .hero-title .accent-text{font-style:normal;color:var(--accent-deep)}
+html[data-theme="dark"] .hero-title em,html[data-theme="dark"] .hero-title .accent-text{color:var(--accent, #2FE58B)}
 .hero-lede{font-family:var(--body);font-size:1.05rem;color:var(--ink-soft);max-width:46ch;margin-top:1.35rem;line-height:1.65}
 .hero-lede b,.hero-lede strong{font-weight:600;color:var(--ink)}
 .hero-cta{display:flex;flex-wrap:wrap;gap:0.85rem;margin-top:2rem}
@@ -158,8 +159,9 @@
   </div>
 </div>
 
+<div class="fluent-ambient-backdrop"></div>
+
 <div id="top" class="hero">
-  <div class="fluent-ambient-backdrop"></div>
   <div class="hero-grid">
     <div>
       <div class="eyebrow reveal" id="heroEyebrow"></div>
