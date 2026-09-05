@@ -425,6 +425,70 @@ html[data-theme="dark"] .theme-toggle .fa-moon{display:none}
 .price-cta{width:100%;justify-content:center}
 .price-card-featured .price-cta{background:var(--green);color:#08150E}
 .price-card-featured .price-cta:hover{background:#22d17f}
+
+/* Multi-button CTA container on pricing cards (1 or 2 buttons) */
+.price-cta-group{
+  display:flex;
+  gap:0.6rem;
+  align-items:center;
+  width:100%;
+}
+.price-cta-group .price-cta,
+.price-cta-group .price-cta-sec{
+  flex:1;
+  min-width:0;
+  justify-content:center;
+  text-align:center;
+  padding:0.8rem 0.85rem;
+  font-size:0.82rem;
+  white-space:nowrap;
+  border-radius:var(--r-pill);
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:0.45rem;
+  font-family:var(--display);
+  font-weight:600;
+  transition:all 0.2s ease;
+}
+.price-cta-sec{
+  background:transparent;
+  color:var(--ink);
+  border:1.5px solid var(--line);
+}
+.price-cta-sec:hover{
+  background:var(--cream2);
+  border-color:var(--ink);
+  transform:translateY(-2px);
+}
+.price-card-featured .price-cta-sec{
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+  border:1.5px solid rgba(255,255,255,0.24);
+}
+.price-card-featured .price-cta-sec:hover{
+  background:rgba(255,255,255,0.18);
+  border-color:#fff;
+  transform:translateY(-2px);
+}
+html[data-theme="dark"] .price-cta-sec{
+  color:var(--ink);
+  border-color:var(--line);
+}
+html[data-theme="dark"] .price-cta-sec:hover{
+  background:var(--cream2);
+  border-color:rgba(255,255,255,0.4);
+}
+@media(max-width:440px){
+  .price-cta-group{
+    flex-direction:column;
+    gap:0.55rem;
+  }
+  .price-cta-group .price-cta,
+  .price-cta-group .price-cta-sec{
+    width:100%;
+  }
+}
 @media(max-width:800px){.price-grid{grid-template-columns:1fr}}
 
 .purchase-guide{max-width:1180px;margin:2.6rem auto 0;background:var(--cream2);border-radius:var(--r-lg);padding:2.8rem 2.6rem}

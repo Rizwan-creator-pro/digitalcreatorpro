@@ -502,7 +502,7 @@ function refreshCompHighlightOptions(){
 
 /* ---------- PRICING ---------- */
 function addPriceCard(card){
-  card = card || { badge: '', featured: false, price: '', note: '', descHtml: '', items: [], ctaHref: '', ctaText: '', ctaIcon: 'fa-solid fa-cart-shopping', priceUSD: '' };
+  card = card || { badge: '', featured: false, price: '', note: '', descHtml: '', items: [], ctaHref: '', ctaText: '', ctaIcon: 'fa-solid fa-cart-shopping', cta2Href: '', cta2Text: '', priceUSD: '' };
   const wrap = document.getElementById('priceList');
   const row = document.createElement('div');
   row.className = 'repeat-item';
@@ -516,11 +516,15 @@ function addPriceCard(card){
     '<div class="f-group"><label class="f-label">Description</label><textarea class="f-input f-textarea pc-desc">' + esc(card.descHtml) + '</textarea></div>' +
     '<div class="f-group"><label class="f-label">Features (one per line)</label><textarea class="f-input f-textarea pc-items">' + esc((card.items || []).join('\n')) + '</textarea></div>' +
     '<div class="f-row-3">' +
-      '<div class="f-group"><label class="f-label">Button Link</label><input class="f-input pc-href" value="' + esc(card.ctaHref) + '"></div>' +
-      '<div class="f-group"><label class="f-label">Button Text</label><input class="f-input pc-text" value="' + esc(card.ctaText) + '" placeholder="Buy on Gumroad"></div>' +
+      '<div class="f-group"><label class="f-label">Primary Button Link</label><input class="f-input pc-href" value="' + esc(card.ctaHref) + '" placeholder="https://... or mailto:..."></div>' +
+      '<div class="f-group"><label class="f-label">Primary Button Text</label><input class="f-input pc-text" value="' + esc(card.ctaText) + '" placeholder="Buy on Gumroad"></div>' +
       '<div class="f-group"><label class="f-label">Price (USD, for bundle math)</label><input class="f-input pc-usd" type="number" value="' + esc(card.priceUSD) + '"></div>' +
     '</div>' +
-    '<label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem"><input type="checkbox" class="pc-featured" ' + (card.featured ? 'checked' : '') + '> Featured (dark highlighted card)</label>';
+    '<div class="f-row" style="margin-top:0.65rem">' +
+      '<div class="f-group"><label class="f-label">Secondary Button Link <span style="font-weight:normal;opacity:0.75;font-size:0.8rem">(Optional — leaves 1 button if empty)</span></label><input class="f-input pc-href2" value="' + esc(card.cta2Href || '') + '" placeholder="mailto:you@example.com"></div>' +
+      '<div class="f-group"><label class="f-label">Secondary Button Text <span style="font-weight:normal;opacity:0.75;font-size:0.8rem">(Optional, e.g. Order via Email)</span></label><input class="f-input pc-text2" value="' + esc(card.cta2Text || '') + '" placeholder="Order via Email"></div>' +
+    '</div>' +
+    '<label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;margin-top:0.65rem"><input type="checkbox" class="pc-featured" ' + (card.featured ? 'checked' : '') + '> Featured (dark highlighted card)</label>';
   wrap.appendChild(row);
 }
 
@@ -577,7 +581,9 @@ function loadIntoForm(p){
   (p.pricing || []).forEach(function(c){
     addPriceCard({
       badge: c.badge, featured: c.featured, descHtml: c.descHtml, items: c.items,
-      ctaHref: c.ctaHref, ctaText: c.ctaText, ctaIcon: c.ctaIcon, priceUSD: c.priceUSD,
+      ctaHref: c.ctaHref, ctaText: c.ctaText, ctaIcon: c.ctaIcon,
+      cta2Href: c.cta2Href || '', cta2Text: c.cta2Text || '',
+      priceUSD: c.priceUSD,
       price: (c.amountHtml || '').match(/^[^<]*/)?.[0] || '',
       note: (c.amountHtml || '').match(/<span>([^<]*)<\/span>/)?.[1] || ''
     });
@@ -644,17 +650,22 @@ document.getElementById('productForm').addEventListener('submit', function(e){
         const price = val(row, '.pc-price');
         const note = val(row, '.pc-note');
         const isFeatured = checked(row, '.pc-featured');
-        pricing.push({
+        const cta2Href = val(row, '.pc-href2').trim();
+        const cta2Text = val(row, '.pc-text2').trim();
+        const cardObj = {
           badge: val(row, '.pc-badge'),
           featured: isFeatured,
           amountHtml: price + (note ? '<span>' + note + '</span>' : ''),
           descHtml: val(row, '.pc-desc'),
           items: splitLines(val(row, '.pc-items')),
-          ctaHref: val(row, '.pc-href'),
-          ctaText: val(row, '.pc-text'),
+          ctaHref: val(row, '.pc-href').trim(),
+          ctaText: val(row, '.pc-text').trim(),
           ctaIcon: isFeatured ? 'fa-solid' : 'fa-brands',
           priceUSD: Number(val(row, '.pc-usd')) || 0
-        });
+        };
+        if (cta2Href) cardObj.cta2Href = cta2Href;
+        if (cta2Text) cardObj.cta2Text = cta2Text;
+        pricing.push(cardObj);
       } catch (rowErr){
         console.error('Skipped a malformed pricing row', rowErr);
       }

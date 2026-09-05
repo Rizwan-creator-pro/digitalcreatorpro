@@ -285,6 +285,8 @@ const PRODUCTS = [
         "ctaHref": "https://gumroad.com/l/YOUR-GUMROAD-SLUG",
         "ctaText": "Buy on Gumroad",
         "ctaIcon": "fa-brands",
+        "cta2Href": "mailto:rizwan@digitalcreator.tech?subject=PDF%20Export%20Engine%20—%20Script%20License%20Inquiry",
+        "cta2Text": "Order via Email",
         "priceUSD": 39
       },
       {
@@ -538,6 +540,8 @@ const PRODUCTS = [
         "ctaHref": "https://gumroad.com/l/YOUR-GUMROAD-SLUG",
         "ctaText": "Buy on Gumroad",
         "ctaIcon": "fa-brands",
+        "cta2Href": "mailto:rizwan@digitalcreator.tech?subject=Report%20Formatting%20Utilities%20—%20Script%20License%20Inquiry",
+        "cta2Text": "Order via Email",
         "priceUSD": 19
       },
       {

@@ -142,20 +142,79 @@ function renderAllGuideGroups(product) {
   return product.guideSections.map(g => renderGuideGroup(g, product)).join('\n');
 }
 
+function getCtaIcon(text, href, fallback) {
+  const t = (text || '').toLowerCase();
+  const h = (href || '').toLowerCase();
+  if (t.includes('email') || t.includes('mail') || h.startsWith('mailto:')) {
+    return 'fa-solid fa-envelope';
+  }
+  if (t.includes('gumroad') || h.includes('gumroad.com')) {
+    return 'fa-brands fa-gumroad';
+  }
+  if (t.includes('cart') || t.includes('buy') || t.includes('order')) {
+    return 'fa-solid fa-cart-shopping';
+  }
+  return fallback || 'fa-solid fa-arrow-right';
+}
+
 /* ---------- pricing card ------------------------------------------ */
 function renderPriceCard(card) {
   const cls = 'price-card' + (card.featured ? ' price-card-featured' : '') + ' reveal';
   const badgeCls = 'price-badge' + (card.featured ? ' featured' : '');
-  const items = card.items.map(t => `<li><i class="fa-solid fa-check"></i>${t}</li>`).join('');
+  const items = (card.items || []).map(t => `<li><i class="fa-solid fa-check"></i>${t}</li>`).join('');
+
+  // Primary button (ctaHref / ctaText)
+  const cta1Href = card.ctaHref || '';
+  const cta1Text = card.ctaText || '';
+  const cta1Icon = (card.ctaIcon && card.ctaIcon !== 'fa-solid' && card.ctaIcon !== 'fa-brands')
+    ? card.ctaIcon
+    : getCtaIcon(cta1Text, cta1Href, card.featured ? 'fa-solid fa-envelope' : 'fa-brands fa-gumroad');
+  const target1 = cta1Href.startsWith('http') ? 'target="_blank" rel="noopener"' : '';
+
+  // Secondary button (cta2Href / cta2Text - conditional)
+  const cta2Href = card.cta2Href || '';
+  const cta2Text = card.cta2Text || '';
+  const cta2Icon = (card.cta2Icon && card.cta2Icon !== 'fa-solid' && card.cta2Icon !== 'fa-brands')
+    ? card.cta2Icon
+    : getCtaIcon(cta2Text, cta2Href, 'fa-solid fa-envelope');
+  const target2 = cta2Href.startsWith('http') ? 'target="_blank" rel="noopener"' : '';
+
+  const hasBtn1 = Boolean(cta1Text && cta1Href);
+  const hasBtn2 = Boolean(cta2Text && cta2Href);
+
+  let ctaHtml = '';
+  if (hasBtn1 && hasBtn2) {
+    // Both buttons: render side-by-side CTA group
+    ctaHtml = `
+      <div class="price-cta-group">
+        <a href="${cta1Href}" class="btn-primary price-cta" ${target1}>
+          <i class="${cta1Icon}"></i> <span>${cta1Text}</span>
+        </a>
+        <a href="${cta2Href}" class="btn-outline price-cta-sec" ${target2}>
+          <i class="${cta2Icon}"></i> <span>${cta2Text}</span>
+        </a>
+      </div>`;
+  } else if (hasBtn1) {
+    // Single primary button
+    ctaHtml = `
+      <a href="${cta1Href}" class="btn-primary price-cta" ${target1}>
+        <i class="${cta1Icon}"></i> <span>${cta1Text}</span>
+      </a>`;
+  } else if (hasBtn2) {
+    // Single secondary button
+    ctaHtml = `
+      <a href="${cta2Href}" class="btn-primary price-cta" ${target2}>
+        <i class="${cta2Icon}"></i> <span>${cta2Text}</span>
+      </a>`;
+  }
+
   return `
     <div class="${cls}">
       <div class="${badgeCls}">${card.badge}</div>
       <div class="price-amount">${card.amountHtml}</div>
       <div class="price-desc">${card.descHtml}</div>
       <ul class="price-list">${items}</ul>
-      <a href="${card.ctaHref}" class="btn-primary price-cta" ${card.ctaHref.startsWith('http') ? 'target="_blank"' : ''}>
-        <i class="${card.ctaIcon || 'fa-solid fa-cart-shopping'}"></i> ${card.ctaText}
-      </a>
+      ${ctaHtml}
     </div>`;
 }
 
