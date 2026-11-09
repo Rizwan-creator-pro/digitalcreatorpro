@@ -42,9 +42,9 @@ html[data-theme="dark"]{
   --cream:#141414;
   --cream2:#1D1D1D;
   --paper:#1A1A1A;
-  --ink:#F2F1EC;
-  --ink-soft:#B8B4A9;
-  --ink-faint:#7A766C;
+  --ink:#F5F5F7;
+  --ink-soft:#A1A1AA;
+  --ink-faint:#71717A;
   --line:rgba(255,255,255,0.12);
   --line2:rgba(255,255,255,0.07);
   --fluent-subtle-hover:rgba(255,255,255,0.055);
@@ -60,6 +60,25 @@ html[data-theme="dark"]{
   --accent-ambient-soft:rgba(var(--accent-rgb), 0.06);
   --card-shadow:0 14px 34px -18px rgba(0,0,0,0.5);
   color-scheme: dark;
+}
+html[data-theme="dark"] .topbar-inner,
+html[data-theme="dark"] .search-input,
+html[data-theme="dark"] .product-card{
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+html[data-theme="dark"] .search-input::placeholder{
+  color: var(--ink-faint) !important;
+}
+html[data-theme="dark"] .search-tag{
+  color: var(--ink-soft) !important;
+  background: var(--cream2) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+html[data-theme="dark"] .search-tag:hover,
+html[data-theme="dark"] .search-tag.active{
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
 html[data-theme="dark"] .hero-media img,
 html[data-theme="dark"] .pc-media img,
@@ -113,6 +132,7 @@ html[data-theme="dark"]{scrollbar-color:rgba(255,255,255,0.24) transparent}
 body{background:var(--cream);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;min-height:100vh}
 ::selection{background:var(--accent);color:#fff}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(21,19,15,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(21,19,15,0.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+html[data-theme="dark"] body::before{background-image:linear-gradient(rgba(255,255,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.035) 1px,transparent 1px)}
 
 /* Modern sleek scrollbar */
 ::-webkit-scrollbar{width:10px;height:10px}

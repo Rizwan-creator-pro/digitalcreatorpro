@@ -7,7 +7,11 @@
 // admin/settings.html.
 
 function loadSiteSettings(){
-  return fetchSiteSettings().then(applySiteSettings).catch(function(err){
+  return fetchSiteSettings().then(function(s){
+    window._siteSettings = s;
+    applySiteSettings(s);
+    return s;
+  }).catch(function(err){
     console.error('Could not load site settings, keeping page defaults', err);
   });
 }
@@ -19,8 +23,27 @@ function applySiteSettings(s){
     document.querySelectorAll('.tb-mark-text').forEach(function(el){ el.textContent = s.siteMark; });
   }
 
-  if (s.cvUrl){
-    document.querySelectorAll('a[href="cv.pdf"]').forEach(function(a){ a.setAttribute('href', s.cvUrl); });
+  const portfolioUrl = s.portfolioUrl || s.cvUrl || 'https://rizwan.digitalcreator.tech';
+  document.querySelectorAll('a[href="cv.pdf"], a[href*="rizwan.digitalcreator.tech"], .tb-cv').forEach(function(a){
+    if (a.id === 'tbBuyLink' || (a.getAttribute('href') && a.getAttribute('href').startsWith('#pricing'))) return;
+    a.setAttribute('href', portfolioUrl);
+    a.setAttribute('target', '_blank');
+    a.removeAttribute('download');
+  });
+
+  if (s.showGuides === false){
+    document.querySelectorAll('a[href*="guide.html"], #tbGuideLink, #ctaGuideLink, #calloutGuideLink, #footerGuideLink').forEach(function(el){
+      el.style.display = 'none';
+    });
+    document.querySelectorAll('.guide-callout, #guideCalloutSection').forEach(function(el){
+      const sec = el.closest('section') || el;
+      sec.style.display = 'none';
+    });
+    const curPath = (location.pathname || '').toLowerCase().replace(/\\/g, '/');
+    if (curPath.endsWith('guide.html') || curPath.includes('/guide.html')){
+      location.replace('index.html');
+      return;
+    }
   }
 
   if (s.email){
@@ -83,7 +106,7 @@ function applySiteSettings(s){
     });
 
     document.querySelectorAll('.footer-actions').forEach(function(wrap){
-      const anchor = wrap.querySelector('a[download]');
+      const anchor = wrap.querySelector('a[download]') || wrap.querySelector('a[href*="rizwan.digitalcreator.tech"]') || wrap.querySelector('.footer-pill:last-child');
       s.socialLinks.forEach(function(soc){
         const a = document.createElement('a');
         a.href = soc.url; a.target = '_blank'; a.className = 'footer-pill';

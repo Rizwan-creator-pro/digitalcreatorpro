@@ -80,6 +80,15 @@ function renderSingleProduct(product) {
   document.getElementById('calloutGuideLink').href = guideHref;
   document.getElementById('footerGuideLink').href = guideHref;
 
+  if (window._siteSettings && window._siteSettings.showGuides === false) {
+    ['tbGuideLink', 'ctaGuideLink', 'calloutGuideLink', 'footerGuideLink'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    const calloutSec = document.getElementById('guideCalloutSection') || document.querySelector('.guide-callout');
+    if (calloutSec) (calloutSec.closest('section') || calloutSec).style.display = 'none';
+  }
+
   document.getElementById('productContent').innerHTML = `
     <div class="product-quickstart-head">
       ${renderAllCodeSections(product)}

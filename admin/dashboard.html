@@ -45,13 +45,22 @@
     <div class="fluent-ambient-backdrop"></div>
     <div class="admin-head">
       <div class="admin-title">Dashboard</div>
-      <div class="acct-menu">
+      <div style="display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap">
+        <div class="quick-guide-toggle" style="display:inline-flex;align-items:center;gap:0.75rem;background:var(--paper);border:1px solid var(--line);padding:0.45rem 1rem;border-radius:var(--r-pill);font-size:0.84rem;font-weight:600;box-shadow:0 2px 8px -2px rgba(0,0,0,0.06)">
+          <i class="fa-solid fa-book-open" style="color:var(--accent)"></i>
+          <span>Public Guides:</span>
+          <label class="toggle-switch" style="margin:0"><input type="checkbox" id="dashShowGuides" checked><span class="toggle-slider"></span></label>
+          <span id="dashGuideStatus" style="font-size:0.75rem;font-weight:700;color:var(--green);font-family:var(--mono)">SHOWN</span>
+        </div>
+        <div class="acct-menu">
         <button class="acct-btn" id="acctBtn"><span class="acct-avatar" id="acctAvatar">?</span><span id="acctEmail"></span> <span class="status-pill on" id="acctRole" style="margin-left:0.3rem"></span> <i class="fa-solid fa-chevron-down" style="font-size:0.7rem"></i></button>
         <div class="acct-dropdown" id="acctDropdown">
           <button type="button" onclick="openChangePassword()"><i class="fa-solid fa-key"></i> Change Password</button>
           <button type="button" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
         </div>
       </div>
+    </div>
+
     </div>
 
     <div class="admin-cards" id="statCards">
@@ -124,6 +133,42 @@ requireAdmin(function(user, adminDoc){
 
   loadProducts();
   if (currentRole === 'admin') loadAdmins();
+
+  // Load and bind Public Guides toggle on Dashboard
+  fetchSiteSettings().then(function(s){
+    s = s || {};
+    const isShown = s.showGuides !== false;
+    const chk = document.getElementById('dashShowGuides');
+    const status = document.getElementById('dashGuideStatus');
+    if (chk) chk.checked = isShown;
+    if (status){
+      status.textContent = isShown ? 'SHOWN' : 'HIDDEN';
+      status.style.color = isShown ? 'var(--green)' : '#e03636';
+    }
+  });
+
+  const dashGuideToggle = document.getElementById('dashShowGuides');
+  if (dashGuideToggle){
+    dashGuideToggle.addEventListener('change', function(){
+      const enabled = this.checked;
+      const status = document.getElementById('dashGuideStatus');
+      if (status){
+        status.textContent = enabled ? 'SHOWN' : 'HIDDEN';
+        status.style.color = enabled ? 'var(--green)' : '#e03636';
+      }
+      saveSiteSettings({ showGuides: enabled }).then(function(){
+        Swal.fire({
+          icon: 'success',
+          title: enabled ? 'Guides are now Visible' : 'Guides are now Hidden',
+          text: enabled ? 'Guide links and pages are visible across the site.' : 'All guide links and pages are hidden from public visitors.',
+          timer: 1600,
+          showConfirmButton: false
+        });
+      }).catch(function(err){
+        Swal.fire({ icon: 'error', title: 'Could not update', text: err.message });
+      });
+    });
+  }
 });
 
 document.getElementById('acctBtn').addEventListener('click', function(){

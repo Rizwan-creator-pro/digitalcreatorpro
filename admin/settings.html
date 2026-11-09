@@ -92,17 +92,17 @@
           </div>
           <div class="f-group">
             <label class="f-label">Phone (display format)</label>
-            <input class="f-input" id="phoneDisplay" placeholder="+92 329 073 4849">
+            <input class="f-input" id="phoneDisplay" placeholder="+92 323 700 4270">
           </div>
         </div>
         <div class="f-row">
           <div class="f-group">
-            <label class="f-label">Phone (digits only, for tel: links) <span class="help-icon">?<span class="help-text">Country code + number, no spaces or symbols, e.g. 923290734849</span></span></label>
-            <input class="f-input" id="phoneDigits" placeholder="923290734849">
+            <label class="f-label">Phone (digits only, for tel: links) <span class="help-icon">?<span class="help-text">Country code + number, no spaces or symbols, e.g. 923237004270</span></span></label>
+            <input class="f-input" id="phoneDigits" placeholder="923237004270">
           </div>
           <div class="f-group">
             <label class="f-label">WhatsApp Number (digits only)</label>
-            <input class="f-input" id="whatsappDigits" placeholder="923290734849">
+            <input class="f-input" id="whatsappDigits" placeholder="923237004270">
           </div>
         </div>
       </div>
@@ -161,7 +161,8 @@ requireFullAdmin(function(){
     document.getElementById('siteName').value = s.siteName || '';
     document.getElementById('ownerName').value = s.ownerName || '';
     document.getElementById('siteMark').value = s.siteMark || '';
-    document.getElementById('cvUrl').value = s.cvUrl || '';
+    document.getElementById('showGuides').checked = s.showGuides !== false;
+    document.getElementById('cvUrl').value = s.portfolioUrl || s.cvUrl || 'https://rizwan.digitalcreator.tech';
     document.getElementById('footerTagline').value = s.footerTagline || '';
     document.getElementById('email').value = s.email || '';
     document.getElementById('phoneDisplay').value = s.phoneDisplay || '';
@@ -233,6 +234,8 @@ document.getElementById('settingsForm').addEventListener('submit', function(e){
     phoneDigits: document.getElementById('phoneDigits').value.trim(),
     whatsappDigits: document.getElementById('whatsappDigits').value.trim(),
     exactGeoEnabled: document.getElementById('exactGeoEnabled').checked,
+    showGuides: document.getElementById('showGuides').checked,
+    portfolioUrl: document.getElementById('cvUrl').value.trim() || 'https://rizwan.digitalcreator.tech',
     socialLinks: socialLinks,
     navLinks: navLinks
   };
